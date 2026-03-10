@@ -905,7 +905,7 @@ Aguardo retorno!
             <p className="text-slate-400 text-sm">
               Desenvolvido por{" "}
               <a
-                href="https://wa.me/85999618245"
+                href="https://wa.me/5585999618245?text=ol%C3%A1%2C%20acabei%20de%20ver%20seu%20site%20JBLX%20e%20gostaria%20de%20um%20dev%20para%20meu%20projeto.%20"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-cyan-400 hover:text-pink-400 font-semibold transition-colors inline-flex items-center gap-1"
