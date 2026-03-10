@@ -1,0 +1,1 @@
+ALTER TABLE `products` ADD `weight` decimal(8,3) DEFAULT 0;
