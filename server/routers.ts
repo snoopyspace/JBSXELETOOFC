@@ -6,6 +6,19 @@ import { z } from "zod";
 import * as db from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
+import crypto from "crypto";
+import { SignJWT, jwtVerify } from "jose";
+import { ENV } from "./_core/env";
+
+const ADMIN_COOKIE = "admin_session";
+const adminSecret = new TextEncoder().encode(ENV.cookieSecret || "fallback-secret-key-jbsx");
+
+function verifyPassword(password: string, hash: string): boolean {
+  const [salt, storedHash] = hash.split(":");
+  if (!salt || !storedHash) return false;
+  const computed = crypto.scryptSync(password, salt, 64).toString("hex");
+  return computed === storedHash;
+}
 
 export const appRouter = router({
   system: systemRouter,
@@ -15,6 +28,55 @@ export const appRouter = router({
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
+    }),
+  }),
+
+  // Admin auth (independent login with username/password)
+  adminAuth: router({
+    login: publicProcedure
+      .input(z.object({ username: z.string().min(1), password: z.string().min(1) }))
+      .mutation(async ({ input, ctx }) => {
+        const admin = await db.getAdminByUsername(input.username);
+        if (!admin || !verifyPassword(input.password, admin.passwordHash)) {
+          throw new Error("Usu\u00e1rio ou senha inv\u00e1lidos");
+        }
+        const token = await new SignJWT({ adminId: admin.id, username: admin.username, name: admin.name })
+          .setProtectedHeader({ alg: "HS256" })
+          .setExpirationTime("24h")
+          .sign(adminSecret);
+        ctx.res.cookie(ADMIN_COOKIE, token, {
+          httpOnly: true,
+          secure: ctx.req.protocol === "https",
+          sameSite: ctx.req.protocol === "https" ? "none" : "lax",
+          path: "/",
+          maxAge: 24 * 60 * 60 * 1000,
+        });
+        return { success: true, name: admin.name, username: admin.username };
+      }),
+    me: publicProcedure.query(async ({ ctx }) => {
+      try {
+        const cookieHeader = ctx.req.headers.cookie || "";
+        const cookies = Object.fromEntries(cookieHeader.split(";").map(c => {
+          const [k, ...v] = c.trim().split("=");
+          return [k, v.join("=")];
+        }));
+        const token = cookies[ADMIN_COOKIE];
+        if (!token) return null;
+        const { payload } = await jwtVerify(token, adminSecret);
+        return { adminId: payload.adminId as number, username: payload.username as string, name: payload.name as string };
+      } catch {
+        return null;
+      }
+    }),
+    logout: publicProcedure.mutation(({ ctx }) => {
+      ctx.res.clearCookie(ADMIN_COOKIE, {
+        httpOnly: true,
+        secure: ctx.req.protocol === "https",
+        sameSite: ctx.req.protocol === "https" ? "none" : "lax",
+        path: "/",
+        maxAge: -1,
+      });
+      return { success: true };
     }),
   }),
 
@@ -329,14 +391,36 @@ export const appRouter = router({
     get: publicProcedure.query(async () => {
       return await db.getPaymentFeeConfig();
     }),
+    getAll: publicProcedure.query(async () => {
+      return await db.getAllPaymentFeeConfigs();
+    }),
+    create: publicProcedure
+      .input(z.object({
+        cardType: z.string().min(1),
+        label: z.string().min(1),
+        feePercentage: z.string(),
+        minFee: z.string(),
+        maxFee: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.createPaymentFeeConfig(input);
+      }),
     update: publicProcedure
       .input(z.object({
+        id: z.number().optional(),
+        cardType: z.string().optional(),
+        label: z.string().optional(),
         feePercentage: z.string().optional(),
         minFee: z.string().optional(),
         maxFee: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         return await db.updatePaymentFeeConfig(input);
+      }),
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deletePaymentFeeConfig(input.id);
       }),
   }),
 });

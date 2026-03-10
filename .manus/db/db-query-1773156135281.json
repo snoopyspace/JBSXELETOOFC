@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO admin_users (username, passwordHash, name) VALUES ('JBLXELETRO.DEV', '067ef263c88eee7a140f45997af4ca91:6bf5e3f63ea4f2ba0951dd394848bb99f4b3b5965eb59779c9a0a60d12b26c741a323f5cd73d3817e9f56d785c26e9615f31818b688d55ef6307ec3867418beb', 'Admin JBSX Eletro');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 24qoFEQo37pAuNZ.0436c89d6e66 --database 4ufiTAguMpYft9f8JCRftq --execute INSERT INTO admin_users (username, passwordHash, name) VALUES ('JBLXELETRO.DEV', '067ef263c88eee7a140f45997af4ca91:6bf5e3f63ea4f2ba0951dd394848bb99f4b3b5965eb59779c9a0a60d12b26c741a323f5cd73d3817e9f56d785c26e9615f31818b688d55ef6307ec3867418beb', 'Admin JBSX Eletro');",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 72
+}

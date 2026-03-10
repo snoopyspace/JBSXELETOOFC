@@ -9,6 +9,7 @@ import {
   paymentFeeConfig, InsertPaymentFeeConfig, PaymentFeeConfig,
   reviews, InsertReview, Review,
   questions, InsertQuestion, Question,
+  adminUsers,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -226,15 +227,38 @@ export async function getPaymentFeeConfig() {
   return result.length > 0 ? result[0] : null;
 }
 
-export async function updatePaymentFeeConfig(config: Partial<InsertPaymentFeeConfig>) {
+export async function getAllPaymentFeeConfigs() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(paymentFeeConfig).orderBy(paymentFeeConfig.id);
+}
+
+export async function createPaymentFeeConfig(config: Omit<InsertPaymentFeeConfig, 'id'>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const result = await db.insert(paymentFeeConfig).values(config);
+  return { id: result[0].insertId };
+}
+
+export async function updatePaymentFeeConfig(config: Partial<InsertPaymentFeeConfig> & { id?: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  if (config.id) {
+    const { id, ...rest } = config;
+    return db.update(paymentFeeConfig).set(rest).where(eq(paymentFeeConfig.id, id));
+  }
   const existing = await getPaymentFeeConfig();
   if (existing) {
     return db.update(paymentFeeConfig).set(config).where(eq(paymentFeeConfig.id, existing.id));
   } else {
     return db.insert(paymentFeeConfig).values(config as InsertPaymentFeeConfig);
   }
+}
+
+export async function deletePaymentFeeConfig(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.delete(paymentFeeConfig).where(eq(paymentFeeConfig.id, id));
 }
 
 // ===================== Review queries =====================
@@ -326,4 +350,13 @@ export async function deleteQuestion(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   return db.delete(questions).where(eq(questions.id, id));
+}
+
+// ===================== Admin user queries =====================
+
+export async function getAdminByUsername(username: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(adminUsers).where(eq(adminUsers.username, username)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
 }

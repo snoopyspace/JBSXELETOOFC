@@ -1,7 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
-import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,19 +13,15 @@ import {
   BarChart3, Menu, X, ArrowLeft, Upload, Video, Image as ImageIcon,
   Eye, ChevronDown, ChevronUp, Search, Home, TrendingUp,
   Star, MessageSquare, CheckCircle, XCircle, Clock, Send, HelpCircle,
+  LogIn, LogOut, Lock, CreditCard, Truck, DollarSign, Percent,
 } from "lucide-react";
 
 type Tab = "dashboard" | "categories" | "products" | "orders" | "abc" | "reviews" | "settings";
 
-// Status labels in Portuguese
 const statusLabels: Record<string, string> = {
-  pending: "Pendente",
-  confirmed: "Confirmado",
-  shipped: "Enviado",
-  delivered: "Entregue",
-  cancelled: "Cancelado",
+  pending: "Pendente", confirmed: "Confirmado", shipped: "Enviado",
+  delivered: "Entregue", cancelled: "Cancelado",
 };
-
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
   confirmed: "bg-green-500/20 text-green-400 border-green-500/30",
@@ -37,11 +31,48 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AdminDashboard() {
-  const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Admin auth state
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(true);
+  const [loginForm, setLoginForm] = useState({ username: "", password: "" });
+  const [loginError, setLoginError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Check admin session
+  const { data: adminSession, refetch: refetchAdminSession } = trpc.adminAuth.me.useQuery(undefined, {
+    retry: false,
+  });
+  const adminLoginMutation = trpc.adminAuth.login.useMutation({
+    onSuccess: () => {
+      setIsAdminLoggedIn(true);
+      setLoginError("");
+      refetchAdminSession();
+      toast.success("Login realizado com sucesso!");
+    },
+    onError: (e) => {
+      setLoginError("Usuário ou senha inválidos");
+      toast.error("Credenciais inválidas");
+    },
+  });
+  const adminLogoutMutation = trpc.adminAuth.logout.useMutation({
+    onSuccess: () => {
+      setIsAdminLoggedIn(false);
+      refetchAdminSession();
+      toast.success("Logout realizado!");
+    },
+  });
+
+  useEffect(() => {
+    if (adminSession !== undefined) {
+      setIsAdminLoggedIn(!!adminSession);
+      setAdminLoading(false);
+    }
+  }, [adminSession]);
 
   // Product form state
   const [showProductForm, setShowProductForm] = useState(false);
@@ -56,21 +87,38 @@ export default function AdminDashboard() {
   const [editingCategoryId, setEditingCategoryId] = useState<number | null>(null);
   const [categoryForm, setCategoryForm] = useState({ name: "", description: "" });
 
-  // Settings forms
+  // Settings forms - shipping
   const [shippingForm, setShippingForm] = useState({ baseCost: "", costPerKg: "", freeShippingThreshold: "" });
-  const [paymentFeeForm, setPaymentFeeForm] = useState({ feePercentage: "", minFee: "", maxFee: "" });
+  // Settings forms - payment fees (multiple card types)
+  const [paymentFeeForm, setPaymentFeeForm] = useState({ cardType: "", label: "", feePercentage: "", minFee: "", maxFee: "" });
+  const [editingFeeId, setEditingFeeId] = useState<number | null>(null);
+  const [showFeeForm, setShowFeeForm] = useState(false);
 
   // Order detail
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
 
   // Queries
-  const { data: products, refetch: refetchProducts } = trpc.products.list.useQuery();
-  const { data: categories, refetch: refetchCategories } = trpc.categories.list.useQuery();
-  const { data: orders, refetch: refetchOrders } = trpc.orders.list.useQuery();
-  const { data: shippingConfig } = trpc.shippingConfig.get.useQuery();
-  const { data: paymentFeeConfig } = trpc.paymentFeeConfig.get.useQuery();
-  const { data: allReviews, refetch: refetchReviews } = trpc.reviews.all.useQuery();
-  const { data: allQuestions, refetch: refetchQuestions } = trpc.questions.all.useQuery();
+  const { data: products, refetch: refetchProducts } = trpc.products.list.useQuery(undefined, { enabled: isAdminLoggedIn });
+  const { data: categories, refetch: refetchCategories } = trpc.categories.list.useQuery(undefined, { enabled: isAdminLoggedIn });
+  const { data: orders, refetch: refetchOrders } = trpc.orders.list.useQuery(undefined, { enabled: isAdminLoggedIn });
+  const { data: shippingConfig } = trpc.shippingConfig.get.useQuery(undefined, { enabled: isAdminLoggedIn });
+  const { data: paymentFeeConfig } = trpc.paymentFeeConfig.get.useQuery(undefined, { enabled: isAdminLoggedIn });
+  const { data: allPaymentFees, refetch: refetchPaymentFees } = trpc.paymentFeeConfig.getAll.useQuery(undefined, { enabled: isAdminLoggedIn });
+  const { data: allReviews, refetch: refetchReviews } = trpc.reviews.all.useQuery(undefined, { enabled: isAdminLoggedIn });
+  const { data: allQuestions, refetch: refetchQuestions } = trpc.questions.all.useQuery(undefined, { enabled: isAdminLoggedIn });
+
+  // Init settings forms when data loads
+  useEffect(() => {
+    if (shippingConfig) {
+      setShippingForm({
+        baseCost: shippingConfig.baseCost || "",
+        costPerKg: shippingConfig.costPerKg || "",
+        freeShippingThreshold: shippingConfig.freeShippingThreshold || "",
+      });
+    }
+  }, [shippingConfig]);
+
+  // No longer need to init paymentFeeForm from single config
 
   // Mutations
   const createProductMutation = trpc.products.create.useMutation({
@@ -103,11 +151,19 @@ export default function AdminDashboard() {
   });
   const uploadImageMutation = trpc.upload.image.useMutation();
   const updateShippingMutation = trpc.shippingConfig.update.useMutation({
-    onSuccess: () => toast.success("Frete atualizado!"),
+    onSuccess: () => toast.success("Configuração de frete salva!"),
+    onError: (e) => toast.error(e.message),
+  });
+  const createPaymentFeeMutation = trpc.paymentFeeConfig.create.useMutation({
+    onSuccess: () => { toast.success("Taxa criada!"); resetFeeForm(); refetchPaymentFees(); },
     onError: (e) => toast.error(e.message),
   });
   const updatePaymentFeeMutation = trpc.paymentFeeConfig.update.useMutation({
-    onSuccess: () => toast.success("Taxa atualizada!"),
+    onSuccess: () => { toast.success("Taxa atualizada!"); resetFeeForm(); refetchPaymentFees(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deletePaymentFeeMutation = trpc.paymentFeeConfig.delete.useMutation({
+    onSuccess: () => { toast.success("Taxa removida!"); refetchPaymentFees(); },
     onError: (e) => toast.error(e.message),
   });
   const updateReviewStatusMutation = trpc.reviews.updateStatus.useMutation({
@@ -139,6 +195,9 @@ export default function AdminDashboard() {
   const [reviewFilter, setReviewFilter] = useState<"all" | "pending" | "approved" | "hidden">("all");
   const [questionFilter, setQuestionFilter] = useState<"all" | "pending" | "answered">("all");
 
+  // Order filter
+  const [orderFilter, setOrderFilter] = useState<"all" | "pending" | "confirmed" | "shipped" | "delivered" | "cancelled">("all");
+
   const resetProductForm = () => {
     setProductForm({ name: "", description: "", price: "", stock: "0", weight: "0", image: "", videoUrl: "", categoryId: 0, gallery: [] });
     setShowProductForm(false);
@@ -162,7 +221,6 @@ export default function AdminDashboard() {
             const result = await uploadImageMutation.mutateAsync({ base64, filename: file.name });
             resolve(result.url);
           } else {
-            // For video, use the video upload endpoint
             const base64Data = base64.split(',')[1] || base64;
             const response = await fetch('/api/trpc/upload.video', {
               method: 'POST',
@@ -179,7 +237,7 @@ export default function AdminDashboard() {
             }
           }
         } catch {
-          toast.error(`Erro no upload do ${type === "image" ? "imagem" : "vídeo"}`);
+          toast.error(`Erro no upload`);
           resolve(null);
         }
       };
@@ -194,7 +252,7 @@ export default function AdminDashboard() {
     orders.forEach((order) => {
       if (order.status === "cancelled") return;
       const items = order.items as Array<{ id: number; name: string; price: string; quantity: number }>;
-      items.forEach((item) => {
+      items?.forEach((item) => {
         if (!productRevenue[item.id]) {
           productRevenue[item.id] = { name: item.name, revenue: 0, quantity: 0 };
         }
@@ -215,7 +273,6 @@ export default function AdminDashboard() {
     });
   }, [products, orders]);
 
-  // Filtered products
   const filteredProducts = useMemo(() => {
     if (!products) return [];
     if (!searchQuery) return products;
@@ -223,71 +280,95 @@ export default function AdminDashboard() {
     return products.filter((p) => p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q));
   }, [products, searchQuery]);
 
-  // Auth check - show login screen instead of silent redirect
-  if (loading) return (
+  const filteredOrders = useMemo(() => {
+    if (!orders) return [];
+    if (orderFilter === "all") return orders;
+    return orders.filter((o) => o.status === orderFilter);
+  }, [orders, orderFilter]);
+
+  // ===== LOGIN SCREEN =====
+  if (adminLoading) return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center">
       <div className="animate-spin w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full" />
     </div>
   );
 
-  if (!user) {
+  if (!isAdminLoggedIn) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center px-4">
-        <div className="max-w-md w-full text-center space-y-6">
-          <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-cyan-500/20 to-pink-500/20 border border-cyan-500/30 flex items-center justify-center">
-            <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663411798042/4ufiTAguMpYft9f8JCRftq/icon-192x192_aefadb0d.png"
-              alt="JBSX Eletro"
-              className="w-14 h-14 rounded-xl"
-            />
+        <div className="max-w-sm w-full">
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-cyan-500/20 to-pink-500/20 border border-cyan-500/30 flex items-center justify-center mb-4">
+              <Lock className="w-10 h-10 text-cyan-400" />
+            </div>
+            <h1 className="text-2xl font-bold text-white">Painel Administrativo</h1>
+            <p className="text-slate-400 text-sm mt-2">JBSX Eletro - Acesso Restrito</p>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white mb-2">Painel Administrativo</h1>
-            <p className="text-slate-400">Faça login para acessar o painel de gestão da JBSX Eletro</p>
-          </div>
-          <Button
-            onClick={() => { window.location.href = getLoginUrl(); }}
-            className="w-full bg-gradient-to-r from-cyan-500 to-cyan-400 hover:shadow-lg hover:shadow-cyan-500/40 text-slate-900 font-bold py-6 text-lg rounded-xl transition-all"
-          >
-            Entrar com Manus
-          </Button>
+
+          <Card className="bg-slate-900/80 border-cyan-500/20">
+            <CardContent className="p-6 space-y-4">
+              {loginError && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-red-400 text-sm text-center">
+                  {loginError}
+                </div>
+              )}
+              <div>
+                <Label className="text-slate-300 text-sm">Usuário</Label>
+                <Input
+                  value={loginForm.username}
+                  onChange={(e) => { setLoginForm({ ...loginForm, username: e.target.value }); setLoginError(""); }}
+                  className="bg-slate-800 border-slate-600 text-white mt-1"
+                  placeholder="Digite seu usuário"
+                  onKeyDown={(e) => e.key === "Enter" && adminLoginMutation.mutate(loginForm)}
+                />
+              </div>
+              <div>
+                <Label className="text-slate-300 text-sm">Senha</Label>
+                <div className="relative mt-1">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={loginForm.password}
+                    onChange={(e) => { setLoginForm({ ...loginForm, password: e.target.value }); setLoginError(""); }}
+                    className="bg-slate-800 border-slate-600 text-white pr-12"
+                    placeholder="Digite sua senha"
+                    onKeyDown={(e) => e.key === "Enter" && adminLoginMutation.mutate(loginForm)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
+                  >
+                    {showPassword ? "Ocultar" : "Mostrar"}
+                  </button>
+                </div>
+              </div>
+              <Button
+                onClick={() => adminLoginMutation.mutate(loginForm)}
+                disabled={adminLoginMutation.isPending || !loginForm.username || !loginForm.password}
+                className="w-full bg-gradient-to-r from-cyan-500 to-cyan-400 hover:shadow-lg hover:shadow-cyan-500/30 text-slate-900 font-bold py-5 text-base rounded-xl transition-all"
+              >
+                {adminLoginMutation.isPending ? (
+                  <div className="animate-spin w-5 h-5 border-2 border-slate-900 border-t-transparent rounded-full" />
+                ) : (
+                  <><LogIn className="w-5 h-5 mr-2" /> Entrar</>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
           <Button
             onClick={() => setLocation("/")}
-            variant="outline"
-            className="w-full border-slate-700 text-slate-400 hover:bg-slate-800 py-5 rounded-xl"
+            variant="ghost"
+            className="w-full mt-4 text-slate-400 hover:text-white"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar para a Loja
+            <ArrowLeft className="w-4 h-4 mr-2" /> Voltar para a Loja
           </Button>
         </div>
       </div>
     );
   }
 
-  if (user.role !== "admin") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center px-4">
-        <div className="max-w-md w-full text-center space-y-6">
-          <div className="w-20 h-20 mx-auto rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center">
-            <XCircle className="w-10 h-10 text-red-400" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white mb-2">Acesso Restrito</h1>
-            <p className="text-slate-400">Você não tem permissão de administrador para acessar este painel.</p>
-            <p className="text-slate-500 text-sm mt-2">Logado como: {user.name || user.email}</p>
-          </div>
-          <Button
-            onClick={() => setLocation("/")}
-            className="w-full bg-gradient-to-r from-cyan-500 to-cyan-400 hover:shadow-lg hover:shadow-cyan-500/40 text-slate-900 font-bold py-6 text-lg rounded-xl transition-all"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar para a Loja
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
+  // ===== ADMIN PANEL =====
   const navItems = [
     { id: "dashboard" as Tab, label: "Painel", icon: Home },
     { id: "categories" as Tab, label: "Categorias", icon: FolderTree },
@@ -401,19 +482,57 @@ export default function AdminDashboard() {
     }));
   };
 
+  const handleSaveShipping = () => {
+    updateShippingMutation.mutate({
+      baseCost: shippingForm.baseCost || undefined,
+      costPerKg: shippingForm.costPerKg || undefined,
+      freeShippingThreshold: shippingForm.freeShippingThreshold || undefined,
+    });
+  };
+
+  const resetFeeForm = () => {
+    setPaymentFeeForm({ cardType: "", label: "", feePercentage: "", minFee: "", maxFee: "" });
+    setEditingFeeId(null);
+    setShowFeeForm(false);
+  };
+
+  const handleSavePaymentFee = () => {
+    if (!paymentFeeForm.cardType || !paymentFeeForm.label || !paymentFeeForm.feePercentage) {
+      toast.error("Preencha tipo, nome e percentual da taxa");
+      return;
+    }
+    if (editingFeeId) {
+      updatePaymentFeeMutation.mutate({ id: editingFeeId, ...paymentFeeForm });
+    } else {
+      createPaymentFeeMutation.mutate(paymentFeeForm);
+    }
+  };
+
+  const handleEditFee = (fee: any) => {
+    setPaymentFeeForm({
+      cardType: fee.cardType || "",
+      label: fee.label || "",
+      feePercentage: fee.feePercentage || "",
+      minFee: fee.minFee || "",
+      maxFee: fee.maxFee || "",
+    });
+    setEditingFeeId(fee.id);
+    setShowFeeForm(true);
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 flex">
       {/* Sidebar - Desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-cyan-500/20 min-h-screen sticky top-0">
         <div className="p-4 border-b border-cyan-500/20">
           <div className="flex items-center gap-3">
-            <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663411798042/4ufiTAguMpYft9f8JCRftq/icon-48x48_aefadb0d.png"
-              alt="JBSX" className="w-8 h-8 rounded-lg"
-            />
-            <h1 className="text-lg font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
-              Admin JBSX
-            </h1>
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-pink-500 flex items-center justify-center">
+              <Lock className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h1 className="text-sm font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">Admin JBSX</h1>
+              <p className="text-xs text-slate-500">{adminSession?.name || adminSession?.username}</p>
+            </div>
           </div>
         </div>
         <nav className="flex-1 p-3 space-y-1">
@@ -432,10 +551,12 @@ export default function AdminDashboard() {
             </button>
           ))}
         </nav>
-        <div className="p-4 border-t border-cyan-500/20">
+        <div className="p-3 space-y-1 border-t border-cyan-500/20">
           <button onClick={() => setLocation("/")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
-            <ArrowLeft className="w-5 h-5" />
-            Voltar à Loja
+            <ArrowLeft className="w-5 h-5" /> Voltar à Loja
+          </button>
+          <button onClick={() => adminLogoutMutation.mutate()} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 transition-all">
+            <LogOut className="w-5 h-5" /> Sair
           </button>
         </div>
       </aside>
@@ -448,9 +569,14 @@ export default function AdminDashboard() {
           </button>
           <span className="font-bold text-cyan-400 text-sm">Admin JBSX</span>
         </div>
-        <button onClick={() => setLocation("/")} className="text-slate-400 text-xs flex items-center gap-1">
-          <ArrowLeft className="w-4 h-4" /> Loja
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setLocation("/")} className="text-slate-400 text-xs flex items-center gap-1">
+            <ArrowLeft className="w-4 h-4" /> Loja
+          </button>
+          <button onClick={() => adminLogoutMutation.mutate()} className="text-red-400 p-1">
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu Overlay */}
@@ -481,35 +607,34 @@ export default function AdminDashboard() {
         {activeTab === "dashboard" && (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold text-white">Painel Geral</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               <Card className="bg-slate-800/80 border-cyan-500/20">
-                <CardContent className="p-4">
+                <CardContent className="p-3 md:p-4">
                   <p className="text-xs text-slate-400">Produtos</p>
-                  <p className="text-2xl font-bold text-cyan-400">{products?.length || 0}</p>
+                  <p className="text-xl md:text-2xl font-bold text-cyan-400">{products?.length || 0}</p>
                 </CardContent>
               </Card>
               <Card className="bg-slate-800/80 border-cyan-500/20">
-                <CardContent className="p-4">
+                <CardContent className="p-3 md:p-4">
                   <p className="text-xs text-slate-400">Categorias</p>
-                  <p className="text-2xl font-bold text-pink-400">{categories?.length || 0}</p>
+                  <p className="text-xl md:text-2xl font-bold text-pink-400">{categories?.length || 0}</p>
                 </CardContent>
               </Card>
               <Card className="bg-slate-800/80 border-cyan-500/20">
-                <CardContent className="p-4">
+                <CardContent className="p-3 md:p-4">
                   <p className="text-xs text-slate-400">Pedidos</p>
-                  <p className="text-2xl font-bold text-green-400">{orders?.length || 0}</p>
+                  <p className="text-xl md:text-2xl font-bold text-green-400">{orders?.length || 0}</p>
                 </CardContent>
               </Card>
               <Card className="bg-slate-800/80 border-cyan-500/20">
-                <CardContent className="p-4">
+                <CardContent className="p-3 md:p-4">
                   <p className="text-xs text-slate-400">Faturamento</p>
-                  <p className="text-2xl font-bold text-yellow-400">
+                  <p className="text-xl md:text-2xl font-bold text-yellow-400">
                     R$ {orders?.filter(o => o.status !== "cancelled").reduce((s, o) => s + parseFloat(o.total), 0).toFixed(2) || "0.00"}
                   </p>
                 </CardContent>
               </Card>
             </div>
-            {/* Recent orders */}
             <Card className="bg-slate-800/80 border-cyan-500/20">
               <CardHeader><CardTitle className="text-cyan-400 text-lg">Últimos Pedidos</CardTitle></CardHeader>
               <CardContent>
@@ -517,11 +642,11 @@ export default function AdminDashboard() {
                   <div className="space-y-3">
                     {orders.slice(0, 5).map((order) => (
                       <div key={order.id} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                        <div>
-                          <p className="text-white text-sm font-medium">#{order.id} - {order.customerName}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-white text-sm font-medium truncate">#{order.id} - {order.customerName}</p>
                           <p className="text-slate-400 text-xs">{new Date(order.createdAt).toLocaleDateString("pt-BR")}</p>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex-shrink-0 ml-3">
                           <p className="text-cyan-400 font-semibold text-sm">R$ {parseFloat(order.total).toFixed(2)}</p>
                           <Badge className={`text-xs ${statusColors[order.status]}`}>{statusLabels[order.status]}</Badge>
                         </div>
@@ -546,9 +671,7 @@ export default function AdminDashboard() {
 
             {showCategoryForm && (
               <Card className="bg-slate-800 border-cyan-500/20">
-                <CardHeader>
-                  <CardTitle className="text-cyan-400">{editingCategoryId ? "Editar" : "Nova"} Categoria</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle className="text-cyan-400">{editingCategoryId ? "Editar" : "Nova"} Categoria</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <div>
                     <Label className="text-slate-300">Nome *</Label>
@@ -556,7 +679,7 @@ export default function AdminDashboard() {
                   </div>
                   <div>
                     <Label className="text-slate-300">Descrição</Label>
-                    <Textarea value={categoryForm.description} onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })} className="bg-slate-700 border-cyan-500/30 text-white" placeholder="Descrição da categoria" rows={3} />
+                    <Textarea value={categoryForm.description} onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })} className="bg-slate-700 border-cyan-500/30 text-white" placeholder="Descrição" rows={3} />
                   </div>
                   <div className="flex gap-3">
                     <Button onClick={handleSaveCategory} disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending} className="flex-1 bg-gradient-to-r from-cyan-500 to-cyan-400 text-slate-900 font-semibold">
@@ -572,12 +695,12 @@ export default function AdminDashboard() {
               {categories?.map((cat) => (
                 <Card key={cat.id} className="bg-slate-800/80 border-cyan-500/20">
                   <CardContent className="p-4 flex items-center justify-between">
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <h3 className="text-white font-semibold">{cat.name}</h3>
-                      {cat.description && <p className="text-slate-400 text-sm mt-1">{cat.description}</p>}
+                      {cat.description && <p className="text-slate-400 text-sm mt-1 truncate">{cat.description}</p>}
                       <p className="text-xs text-slate-500 mt-1">{products?.filter(p => p.categoryId === cat.id).length || 0} produtos</p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-shrink-0 ml-3">
                       <Button variant="outline" size="sm" className="border-slate-600 text-slate-300" onClick={() => handleEditCategory(cat)}><Edit2 className="w-4 h-4" /></Button>
                       <Button variant="outline" size="sm" className="border-red-600 text-red-400 hover:bg-red-500/20" onClick={() => { if (confirm("Deletar categoria?")) deleteCategoryMutation.mutate({ id: cat.id }); }}><Trash2 className="w-4 h-4" /></Button>
                     </div>
@@ -599,13 +722,11 @@ export default function AdminDashboard() {
               </Button>
             </div>
 
-            {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 bg-slate-800 border-cyan-500/20 text-white" placeholder="Buscar produtos..." />
             </div>
 
-            {/* Product Form */}
             {showProductForm && (
               <Card className="bg-slate-800 border-cyan-500/20">
                 <CardHeader>
@@ -627,8 +748,9 @@ export default function AdminDashboard() {
                   </div>
 
                   <div>
-                    <Label className="text-slate-300">Descrição</Label>
-                    <Textarea value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} className="bg-slate-700 border-cyan-500/30 text-white" placeholder="Descrição detalhada do produto..." rows={4} />
+                    <Label className="text-slate-300">Descrição Detalhada</Label>
+                    <Textarea value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} className="bg-slate-700 border-cyan-500/30 text-white" placeholder="Descrição completa do produto que aparecerá na página de detalhes..." rows={5} />
+                    <p className="text-xs text-slate-500 mt-1">Esta descrição será exibida na página individual do produto.</p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -651,7 +773,7 @@ export default function AdminDashboard() {
                     <Label className="text-slate-300 flex items-center gap-2"><ImageIcon className="w-4 h-4" /> Imagem Principal</Label>
                     <div className="flex flex-col sm:flex-row gap-3 mt-1">
                       <Input value={productForm.image} onChange={(e) => setProductForm({ ...productForm, image: e.target.value })} className="bg-slate-700 border-cyan-500/30 text-white flex-1" placeholder="URL da imagem ou faça upload" />
-                      <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-slate-700 border border-cyan-500/30 rounded-md text-cyan-400 text-sm hover:bg-slate-600 transition-colors">
+                      <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-slate-700 border border-cyan-500/30 rounded-md text-cyan-400 text-sm hover:bg-slate-600 transition-colors flex-shrink-0">
                         <Upload className="w-4 h-4" /> Upload
                         <input type="file" accept="image/*" className="hidden" onChange={handleImageUploadForProduct} />
                       </label>
@@ -663,11 +785,12 @@ export default function AdminDashboard() {
 
                   {/* Gallery Upload */}
                   <div>
-                    <Label className="text-slate-300 flex items-center gap-2"><ImageIcon className="w-4 h-4" /> Galeria de Fotos</Label>
+                    <Label className="text-slate-300 flex items-center gap-2"><ImageIcon className="w-4 h-4" /> Galeria de Fotos (página de detalhes)</Label>
                     <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-slate-700 border border-cyan-500/30 rounded-md text-cyan-400 text-sm hover:bg-slate-600 transition-colors mt-1">
                       <Upload className="w-4 h-4" /> Adicionar Fotos
                       <input type="file" accept="image/*" multiple className="hidden" onChange={handleGalleryUpload} />
                     </label>
+                    <p className="text-xs text-slate-500 mt-1">Estas fotos aparecerão na galeria da página do produto.</p>
                     {productForm.gallery.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-2">
                         {productForm.gallery.map((url, i) => (
@@ -684,17 +807,16 @@ export default function AdminDashboard() {
 
                   {/* Video Upload */}
                   <div>
-                    <Label className="text-slate-300 flex items-center gap-2"><Video className="w-4 h-4" /> Vídeo do Produto</Label>
+                    <Label className="text-slate-300 flex items-center gap-2"><Video className="w-4 h-4" /> Vídeo do Produto (página de detalhes)</Label>
                     <div className="flex flex-col sm:flex-row gap-3 mt-1">
                       <Input value={productForm.videoUrl} onChange={(e) => setProductForm({ ...productForm, videoUrl: e.target.value })} className="bg-slate-700 border-cyan-500/30 text-white flex-1" placeholder="URL do vídeo (YouTube, MP4, etc)" />
-                      <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-slate-700 border border-cyan-500/30 rounded-md text-pink-400 text-sm hover:bg-slate-600 transition-colors">
+                      <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-slate-700 border border-cyan-500/30 rounded-md text-pink-400 text-sm hover:bg-slate-600 transition-colors flex-shrink-0">
                         <Video className="w-4 h-4" /> Upload
                         <input type="file" accept="video/*" className="hidden" onChange={handleVideoUpload} />
                       </label>
                     </div>
-                    {productForm.videoUrl && (
-                      <p className="text-xs text-green-400 mt-1">Vídeo configurado</p>
-                    )}
+                    <p className="text-xs text-slate-500 mt-1">O vídeo aparecerá na página individual do produto.</p>
+                    {productForm.videoUrl && <p className="text-xs text-green-400 mt-1">Vídeo configurado</p>}
                   </div>
 
                   <div className="flex gap-3">
@@ -718,7 +840,7 @@ export default function AdminDashboard() {
                           <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                         </div>
                       )}
-                      <div className="flex-1 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex-1 p-3 md:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <h3 className="text-white font-semibold truncate">{product.name}</h3>
@@ -726,10 +848,10 @@ export default function AdminDashboard() {
                             {product.gallery && (product.gallery as string[]).length > 0 && <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs"><ImageIcon className="w-3 h-3 mr-1" />{(product.gallery as string[]).length}</Badge>}
                           </div>
                           {product.description && <p className="text-slate-400 text-sm mt-1 line-clamp-1">{product.description}</p>}
-                          <div className="flex flex-wrap gap-3 mt-2 text-sm">
+                          <div className="flex flex-wrap gap-2 md:gap-3 mt-2 text-sm">
                             <span className="text-cyan-400 font-semibold">R$ {parseFloat(product.price).toFixed(2)}</span>
                             <span className={product.stock > 0 ? "text-green-400" : "text-red-400"}>
-                              {product.stock > 0 ? `Estoque: ${product.stock}` : "Sem estoque"}
+                              {product.stock > 0 ? `Est: ${product.stock}` : "Sem estoque"}
                             </span>
                             {categories?.find(c => c.id === product.categoryId) && (
                               <Badge className="bg-slate-700 text-slate-300 border-slate-600 text-xs">{categories.find(c => c.id === product.categoryId)?.name}</Badge>
@@ -754,21 +876,36 @@ export default function AdminDashboard() {
         {/* ===== ORDERS ===== */}
         {activeTab === "orders" && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white">Pedidos</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <h2 className="text-2xl font-bold text-white">Pedidos ({orders?.length || 0})</h2>
+            </div>
+
+            {/* Order Filters */}
+            <div className="flex flex-wrap gap-2">
+              {(["all", "pending", "confirmed", "shipped", "delivered", "cancelled"] as const).map((f) => (
+                <button key={f} onClick={() => setOrderFilter(f)}
+                  className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                    orderFilter === f ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-400" : "bg-slate-800 border-slate-600 text-slate-400"
+                  }`}>
+                  {f === "all" ? `Todos (${orders?.length || 0})` : `${statusLabels[f]} (${orders?.filter(o => o.status === f).length || 0})`}
+                </button>
+              ))}
+            </div>
+
             <div className="grid gap-3">
-              {orders?.map((order) => (
+              {filteredOrders.map((order) => (
                 <Card key={order.id} className="bg-slate-800/80 border-cyan-500/20">
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 md:p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer" onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="text-white font-semibold">Pedido #{order.id}</h3>
                           <Badge className={`text-xs ${statusColors[order.status]}`}>{statusLabels[order.status]}</Badge>
                         </div>
-                        <p className="text-slate-400 text-sm mt-1">{order.customerName} - {order.customerPhone}</p>
+                        <p className="text-slate-400 text-sm mt-1 truncate">{order.customerName} - {order.customerPhone}</p>
                         <p className="text-slate-500 text-xs">{new Date(order.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-shrink-0">
                         <span className="text-cyan-400 font-bold">R$ {parseFloat(order.total).toFixed(2)}</span>
                         {expandedOrderId === order.id ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
                       </div>
@@ -776,18 +913,16 @@ export default function AdminDashboard() {
 
                     {expandedOrderId === order.id && (
                       <div className="mt-4 pt-4 border-t border-slate-700 space-y-4">
-                        {/* Customer Info */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                           <div><span className="text-slate-500">Email:</span> <span className="text-slate-300">{order.customerEmail}</span></div>
                           <div><span className="text-slate-500">Telefone:</span> <span className="text-slate-300">{order.customerPhone}</span></div>
                           {order.customerAddress && <div className="sm:col-span-2"><span className="text-slate-500">Endereço:</span> <span className="text-slate-300">{order.customerAddress}</span></div>}
                         </div>
 
-                        {/* Items */}
                         <div>
                           <h4 className="text-slate-300 font-medium text-sm mb-2">Itens:</h4>
                           <div className="space-y-2">
-                            {(order.items as Array<{ id: number; name: string; price: string; quantity: number }>).map((item, i) => (
+                            {(order.items as Array<{ id: number; name: string; price: string; quantity: number }>)?.map((item, i) => (
                               <div key={i} className="flex justify-between text-sm bg-slate-700/50 p-2 rounded">
                                 <span className="text-slate-300">{item.quantity}x {item.name}</span>
                                 <span className="text-cyan-400">R$ {(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
@@ -796,7 +931,6 @@ export default function AdminDashboard() {
                           </div>
                         </div>
 
-                        {/* Totals */}
                         <div className="text-sm space-y-1 bg-slate-700/30 p-3 rounded-lg">
                           <div className="flex justify-between"><span className="text-slate-400">Subtotal:</span><span className="text-slate-300">R$ {parseFloat(order.subtotal).toFixed(2)}</span></div>
                           <div className="flex justify-between"><span className="text-slate-400">Frete:</span><span className="text-slate-300">R$ {parseFloat(order.shippingCost).toFixed(2)}</span></div>
@@ -804,27 +938,29 @@ export default function AdminDashboard() {
                           <div className="flex justify-between font-bold border-t border-slate-600 pt-1"><span className="text-white">Total:</span><span className="text-cyan-400">R$ {parseFloat(order.total).toFixed(2)}</span></div>
                         </div>
 
-                        {/* Status Update */}
-                        <div className="flex flex-wrap gap-2">
-                          {(["pending", "confirmed", "shipped", "delivered", "cancelled"] as const).map((status) => (
-                            <Button
-                              key={status}
-                              size="sm"
-                              variant={order.status === status ? "default" : "outline"}
-                              className={order.status === status ? "bg-cyan-500 text-slate-900" : "border-slate-600 text-slate-400"}
-                              onClick={() => updateOrderMutation.mutate({ id: order.id, status })}
-                              disabled={updateOrderMutation.isPending}
-                            >
-                              {statusLabels[status]}
-                            </Button>
-                          ))}
+                        <div>
+                          <p className="text-xs text-slate-500 mb-2">Alterar status:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {(["pending", "confirmed", "shipped", "delivered", "cancelled"] as const).map((status) => (
+                              <Button
+                                key={status}
+                                size="sm"
+                                variant={order.status === status ? "default" : "outline"}
+                                className={order.status === status ? "bg-cyan-500 text-slate-900" : "border-slate-600 text-slate-400 text-xs"}
+                                onClick={() => updateOrderMutation.mutate({ id: order.id, status })}
+                                disabled={updateOrderMutation.isPending}
+                              >
+                                {statusLabels[status]}
+                              </Button>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}
                   </CardContent>
                 </Card>
               ))}
-              {(!orders || orders.length === 0) && <p className="text-slate-400 text-center py-8">Nenhum pedido</p>}
+              {filteredOrders.length === 0 && <p className="text-slate-400 text-center py-8">Nenhum pedido encontrado</p>}
             </div>
           </div>
         )}
@@ -836,36 +972,31 @@ export default function AdminDashboard() {
               <TrendingUp className="w-6 h-6 text-cyan-400" />
               <h2 className="text-2xl font-bold text-white">Curva ABC</h2>
             </div>
-            <p className="text-slate-400 text-sm">Classificação dos produtos por faturamento. A = 80% do faturamento, B = 15%, C = 5%.</p>
+            <p className="text-slate-400 text-sm">Classificação dos produtos por faturamento. A = 80%, B = 15%, C = 5%.</p>
 
             {abcData.length > 0 ? (
               <>
-                {/* Summary Cards */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-3 md:gap-4">
                   <Card className="bg-green-500/10 border-green-500/30">
-                    <CardContent className="p-4 text-center">
-                      <p className="text-green-400 text-2xl font-bold">{abcData.filter(p => p.classification === "A").length}</p>
-                      <p className="text-green-400/70 text-sm">Classe A</p>
-                      <p className="text-green-400/50 text-xs">80% faturamento</p>
+                    <CardContent className="p-3 md:p-4 text-center">
+                      <p className="text-green-400 text-xl md:text-2xl font-bold">{abcData.filter(p => p.classification === "A").length}</p>
+                      <p className="text-green-400/70 text-xs md:text-sm">Classe A</p>
                     </CardContent>
                   </Card>
                   <Card className="bg-yellow-500/10 border-yellow-500/30">
-                    <CardContent className="p-4 text-center">
-                      <p className="text-yellow-400 text-2xl font-bold">{abcData.filter(p => p.classification === "B").length}</p>
-                      <p className="text-yellow-400/70 text-sm">Classe B</p>
-                      <p className="text-yellow-400/50 text-xs">15% faturamento</p>
+                    <CardContent className="p-3 md:p-4 text-center">
+                      <p className="text-yellow-400 text-xl md:text-2xl font-bold">{abcData.filter(p => p.classification === "B").length}</p>
+                      <p className="text-yellow-400/70 text-xs md:text-sm">Classe B</p>
                     </CardContent>
                   </Card>
                   <Card className="bg-red-500/10 border-red-500/30">
-                    <CardContent className="p-4 text-center">
-                      <p className="text-red-400 text-2xl font-bold">{abcData.filter(p => p.classification === "C").length}</p>
-                      <p className="text-red-400/70 text-sm">Classe C</p>
-                      <p className="text-red-400/50 text-xs">5% faturamento</p>
+                    <CardContent className="p-3 md:p-4 text-center">
+                      <p className="text-red-400 text-xl md:text-2xl font-bold">{abcData.filter(p => p.classification === "C").length}</p>
+                      <p className="text-red-400/70 text-xs md:text-sm">Classe C</p>
                     </CardContent>
                   </Card>
                 </div>
 
-                {/* ABC Table */}
                 <Card className="bg-slate-800/80 border-cyan-500/20 overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -873,10 +1004,10 @@ export default function AdminDashboard() {
                         <tr className="border-b border-slate-700">
                           <th className="text-left p-3 text-slate-400 font-medium">Classe</th>
                           <th className="text-left p-3 text-slate-400 font-medium">Produto</th>
-                          <th className="text-right p-3 text-slate-400 font-medium">Qtd</th>
+                          <th className="text-right p-3 text-slate-400 font-medium hidden sm:table-cell">Qtd</th>
                           <th className="text-right p-3 text-slate-400 font-medium">Faturamento</th>
-                          <th className="text-right p-3 text-slate-400 font-medium">%</th>
-                          <th className="text-right p-3 text-slate-400 font-medium">Acum.</th>
+                          <th className="text-right p-3 text-slate-400 font-medium hidden md:table-cell">%</th>
+                          <th className="text-right p-3 text-slate-400 font-medium hidden md:table-cell">Acum.</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -889,11 +1020,11 @@ export default function AdminDashboard() {
                                 "bg-red-500/20 text-red-400 border-red-500/30"
                               }`}>{item.classification}</Badge>
                             </td>
-                            <td className="p-3 text-white">{item.name}</td>
-                            <td className="p-3 text-right text-slate-300">{item.quantity}</td>
+                            <td className="p-3 text-white max-w-[150px] truncate">{item.name}</td>
+                            <td className="p-3 text-right text-slate-300 hidden sm:table-cell">{item.quantity}</td>
                             <td className="p-3 text-right text-cyan-400 font-semibold">R$ {item.revenue.toFixed(2)}</td>
-                            <td className="p-3 text-right text-slate-300">{item.percentage.toFixed(1)}%</td>
-                            <td className="p-3 text-right text-slate-400">{item.cumulative.toFixed(1)}%</td>
+                            <td className="p-3 text-right text-slate-300 hidden md:table-cell">{item.percentage.toFixed(1)}%</td>
+                            <td className="p-3 text-right text-slate-400 hidden md:table-cell">{item.cumulative.toFixed(1)}%</td>
                           </tr>
                         ))}
                       </tbody>
@@ -913,10 +1044,9 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ===== SETTINGS ===== */}
+        {/* ===== REVIEWS & QUESTIONS ===== */}
         {activeTab === "reviews" && (
           <div className="space-y-6">
-            {/* Reviews Management */}
             <Card className="bg-slate-800/80 border-cyan-500/20">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
@@ -941,12 +1071,12 @@ export default function AdminDashboard() {
                   allReviews?.filter((r) => reviewFilter === "all" || r.status === reviewFilter).map((review) => {
                     const product = products?.find((p) => p.id === review.productId);
                     return (
-                      <div key={review.id} className="bg-slate-700/50 rounded-lg p-4 border border-slate-600/50 space-y-3">
+                      <div key={review.id} className="bg-slate-700/50 rounded-lg p-3 md:p-4 border border-slate-600/50 space-y-3">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <div className="flex gap-0.5">
                               {[1,2,3,4,5].map((s) => (
-                                <Star key={s} className={`w-4 h-4 ${s <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-slate-600"}`} />
+                                <Star key={s} className={`w-3 h-3 md:w-4 md:h-4 ${s <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-slate-600"}`} />
                               ))}
                             </div>
                             <span className="text-white font-medium text-sm">{review.customerName}</span>
@@ -967,7 +1097,7 @@ export default function AdminDashboard() {
                         {reviewResponseId === review.id && (
                           <div className="flex gap-2">
                             <Input value={reviewResponseText} onChange={(e) => setReviewResponseText(e.target.value)} placeholder="Escreva sua resposta..." className="bg-slate-600 border-slate-500 text-white text-sm" />
-                            <Button size="sm" onClick={() => { respondReviewMutation.mutate({ id: review.id, adminResponse: reviewResponseText }); setReviewResponseId(null); setReviewResponseText(""); }} disabled={!reviewResponseText.trim()} className="bg-cyan-500 text-slate-900">
+                            <Button size="sm" onClick={() => { respondReviewMutation.mutate({ id: review.id, adminResponse: reviewResponseText }); setReviewResponseId(null); setReviewResponseText(""); }} disabled={!reviewResponseText.trim()} className="bg-cyan-500 text-slate-900 flex-shrink-0">
                               <Send className="w-4 h-4" />
                             </Button>
                           </div>
@@ -997,7 +1127,6 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            {/* Questions Management */}
             <Card className="bg-slate-800/80 border-pink-500/20">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
@@ -1022,18 +1151,14 @@ export default function AdminDashboard() {
                   allQuestions?.filter((q) => questionFilter === "all" || q.status === questionFilter).map((q) => {
                     const product = products?.find((p) => p.id === q.productId);
                     return (
-                      <div key={q.id} className="bg-slate-700/50 rounded-lg p-4 border border-slate-600/50 space-y-3">
+                      <div key={q.id} className="bg-slate-700/50 rounded-lg p-3 md:p-4 border border-slate-600/50 space-y-3">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-white font-medium text-sm">{q.customerName}</span>
                             {q.status === "answered" ? (
-                              <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
-                                <CheckCircle className="w-3 h-3 mr-1" /> Respondida
-                              </Badge>
+                              <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs"><CheckCircle className="w-3 h-3 mr-1" /> Respondida</Badge>
                             ) : (
-                              <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">
-                                <Clock className="w-3 h-3 mr-1" /> Pendente
-                              </Badge>
+                              <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs"><Clock className="w-3 h-3 mr-1" /> Pendente</Badge>
                             )}
                           </div>
                           <span className="text-xs text-slate-500">{new Date(q.createdAt).toLocaleDateString("pt-BR")}</span>
@@ -1049,7 +1174,7 @@ export default function AdminDashboard() {
                         {questionResponseId === q.id && (
                           <div className="flex gap-2">
                             <Input value={questionResponseText} onChange={(e) => setQuestionResponseText(e.target.value)} placeholder="Escreva sua resposta..." className="bg-slate-600 border-slate-500 text-white text-sm" />
-                            <Button size="sm" onClick={() => { respondQuestionMutation.mutate({ id: q.id, adminResponse: questionResponseText }); setQuestionResponseId(null); setQuestionResponseText(""); }} disabled={!questionResponseText.trim()} className="bg-pink-500 text-white">
+                            <Button size="sm" onClick={() => { respondQuestionMutation.mutate({ id: q.id, adminResponse: questionResponseText }); setQuestionResponseId(null); setQuestionResponseText(""); }} disabled={!questionResponseText.trim()} className="bg-pink-500 text-white flex-shrink-0">
                               <Send className="w-4 h-4" />
                             </Button>
                           </div>
@@ -1071,53 +1196,226 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* ===== SETTINGS ===== */}
         {activeTab === "settings" && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white">Configurações</h2>
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              <Settings className="w-6 h-6 text-cyan-400" /> Configurações
+            </h2>
 
+            {/* Shipping Config */}
             <Card className="bg-slate-800 border-cyan-500/20">
-              <CardHeader><CardTitle className="text-cyan-400">Configuração de Frete</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle className="text-cyan-400 flex items-center gap-2">
+                  <Truck className="w-5 h-5" /> Configuração de Frete
+                </CardTitle>
+                <p className="text-slate-500 text-sm mt-1">Configure os valores de frete para cálculo automático nos pedidos.</p>
+              </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <Label className="text-slate-300">Custo Base (R$)</Label>
-                    <Input type="number" step="0.01" value={shippingForm.baseCost || (shippingConfig?.baseCost || "")} onChange={(e) => setShippingForm({ ...shippingForm, baseCost: e.target.value })} className="bg-slate-700 border-cyan-500/30 text-white" />
+                  <div className="space-y-2">
+                    <Label className="text-slate-300 flex items-center gap-1">
+                      <DollarSign className="w-3 h-3" /> Custo Base (R$)
+                    </Label>
+                    <Input
+                      type="number" step="0.01"
+                      value={shippingForm.baseCost}
+                      onChange={(e) => setShippingForm({ ...shippingForm, baseCost: e.target.value })}
+                      className="bg-slate-700 border-cyan-500/30 text-white"
+                      placeholder="Ex: 15.00"
+                    />
+                    <p className="text-xs text-slate-500">Valor fixo cobrado em todo pedido</p>
                   </div>
-                  <div>
-                    <Label className="text-slate-300">Custo por kg (R$)</Label>
-                    <Input type="number" step="0.01" value={shippingForm.costPerKg || (shippingConfig?.costPerKg || "")} onChange={(e) => setShippingForm({ ...shippingForm, costPerKg: e.target.value })} className="bg-slate-700 border-cyan-500/30 text-white" />
+                  <div className="space-y-2">
+                    <Label className="text-slate-300 flex items-center gap-1">
+                      <Package className="w-3 h-3" /> Custo por kg (R$)
+                    </Label>
+                    <Input
+                      type="number" step="0.01"
+                      value={shippingForm.costPerKg}
+                      onChange={(e) => setShippingForm({ ...shippingForm, costPerKg: e.target.value })}
+                      className="bg-slate-700 border-cyan-500/30 text-white"
+                      placeholder="Ex: 5.00"
+                    />
+                    <p className="text-xs text-slate-500">Valor adicional por quilograma</p>
                   </div>
-                  <div>
-                    <Label className="text-slate-300">Frete Grátis Acima (R$)</Label>
-                    <Input type="number" step="0.01" value={shippingForm.freeShippingThreshold || (shippingConfig?.freeShippingThreshold || "")} onChange={(e) => setShippingForm({ ...shippingForm, freeShippingThreshold: e.target.value })} className="bg-slate-700 border-cyan-500/30 text-white" />
+                  <div className="space-y-2">
+                    <Label className="text-slate-300 flex items-center gap-1">
+                      <Truck className="w-3 h-3" /> Frete Grátis Acima (R$)
+                    </Label>
+                    <Input
+                      type="number" step="0.01"
+                      value={shippingForm.freeShippingThreshold}
+                      onChange={(e) => setShippingForm({ ...shippingForm, freeShippingThreshold: e.target.value })}
+                      className="bg-slate-700 border-cyan-500/30 text-white"
+                      placeholder="Ex: 200.00"
+                    />
+                    <p className="text-xs text-slate-500">Pedidos acima deste valor têm frete grátis</p>
                   </div>
                 </div>
-                <Button onClick={() => updateShippingMutation.mutate({ baseCost: shippingForm.baseCost || undefined, costPerKg: shippingForm.costPerKg || undefined, freeShippingThreshold: shippingForm.freeShippingThreshold || undefined })} disabled={updateShippingMutation.isPending} className="bg-gradient-to-r from-cyan-500 to-cyan-400 text-slate-900 font-semibold">
-                  {updateShippingMutation.isPending ? "Salvando..." : "Salvar Frete"}
+                <Button onClick={handleSaveShipping} disabled={updateShippingMutation.isPending} className="bg-gradient-to-r from-cyan-500 to-cyan-400 text-slate-900 font-semibold w-full sm:w-auto">
+                  {updateShippingMutation.isPending ? "Salvando..." : "Salvar Configuração de Frete"}
                 </Button>
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-800 border-cyan-500/20">
-              <CardHeader><CardTitle className="text-cyan-400">Taxa de Pagamento</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Payment Fee Config - Multiple Card Types */}
+            <Card className="bg-slate-800 border-pink-500/20">
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <Label className="text-slate-300">Percentual (%)</Label>
-                    <Input type="number" step="0.01" value={paymentFeeForm.feePercentage || (paymentFeeConfig?.feePercentage || "")} onChange={(e) => setPaymentFeeForm({ ...paymentFeeForm, feePercentage: e.target.value })} className="bg-slate-700 border-cyan-500/30 text-white" />
+                    <CardTitle className="text-pink-400 flex items-center gap-2">
+                      <CreditCard className="w-5 h-5" /> Taxas de Pagamento
+                    </CardTitle>
+                    <p className="text-slate-500 text-sm mt-1">Gerencie taxas para diferentes formas de pagamento (crédito, débito, PIX, etc).</p>
                   </div>
-                  <div>
-                    <Label className="text-slate-300">Taxa Mínima (R$)</Label>
-                    <Input type="number" step="0.01" value={paymentFeeForm.minFee || (paymentFeeConfig?.minFee || "")} onChange={(e) => setPaymentFeeForm({ ...paymentFeeForm, minFee: e.target.value })} className="bg-slate-700 border-cyan-500/30 text-white" />
-                  </div>
-                  <div>
-                    <Label className="text-slate-300">Taxa Máxima (R$)</Label>
-                    <Input type="number" step="0.01" value={paymentFeeForm.maxFee || (paymentFeeConfig?.maxFee || "")} onChange={(e) => setPaymentFeeForm({ ...paymentFeeForm, maxFee: e.target.value })} className="bg-slate-700 border-cyan-500/30 text-white" />
-                  </div>
+                  <Button onClick={() => { resetFeeForm(); setShowFeeForm(true); }} className="bg-gradient-to-r from-pink-500 to-pink-400 text-white font-semibold flex-shrink-0">
+                    <Plus className="w-4 h-4 mr-1" /> Nova Taxa
+                  </Button>
                 </div>
-                <Button onClick={() => updatePaymentFeeMutation.mutate({ feePercentage: paymentFeeForm.feePercentage || undefined, minFee: paymentFeeForm.minFee || undefined, maxFee: paymentFeeForm.maxFee || undefined })} disabled={updatePaymentFeeMutation.isPending} className="bg-gradient-to-r from-cyan-500 to-cyan-400 text-slate-900 font-semibold">
-                  {updatePaymentFeeMutation.isPending ? "Salvando..." : "Salvar Taxa"}
-                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Existing fees list */}
+                {allPaymentFees && allPaymentFees.length > 0 ? (
+                  <div className="space-y-3">
+                    {allPaymentFees.map((fee) => (
+                      <div key={fee.id} className="bg-slate-700/50 rounded-lg p-4 border border-slate-600/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge className={`text-xs ${
+                              fee.cardType === 'credit' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' :
+                              fee.cardType === 'debit' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                              fee.cardType === 'pix' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                              'bg-pink-500/20 text-pink-400 border-pink-500/30'
+                            }`}>{fee.cardType}</Badge>
+                            <span className="text-white font-medium text-sm">{fee.label}</span>
+                          </div>
+                          <div className="flex gap-4 mt-2 text-xs text-slate-400">
+                            <span>Taxa: <span className="text-pink-400 font-semibold">{fee.feePercentage}%</span></span>
+                            <span>Mín: <span className="text-slate-300">R$ {parseFloat(fee.minFee).toFixed(2)}</span></span>
+                            <span>Máx: <span className="text-slate-300">R$ {parseFloat(fee.maxFee).toFixed(2)}</span></span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 flex-shrink-0">
+                          <Button size="sm" variant="outline" onClick={() => handleEditFee(fee)} className="text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/10 text-xs">
+                            <Edit2 className="w-3 h-3 mr-1" /> Editar
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => { if (confirm('Excluir esta taxa?')) deletePaymentFeeMutation.mutate({ id: fee.id }); }} className="text-red-400 border-red-500/30 hover:bg-red-500/10 text-xs">
+                            <Trash2 className="w-3 h-3 mr-1" /> Excluir
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-slate-500 text-center py-4">Nenhuma taxa cadastrada. Clique em "Nova Taxa" para criar.</p>
+                )}
+
+                {/* Fee form */}
+                {showFeeForm && (
+                  <div className="bg-slate-700/30 rounded-lg p-4 border border-pink-500/20 space-y-4">
+                    <h4 className="text-pink-400 font-semibold text-sm">{editingFeeId ? 'Editar Taxa' : 'Nova Taxa de Pagamento'}</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-slate-300 text-sm">Tipo</Label>
+                        <select
+                          value={paymentFeeForm.cardType}
+                          onChange={(e) => {
+                            const type = e.target.value;
+                            const labels: Record<string, string> = { credit: 'Cartão de Crédito', debit: 'Cartão de Débito', pix: 'PIX', other: 'Outro' };
+                            setPaymentFeeForm({ ...paymentFeeForm, cardType: type, label: paymentFeeForm.label || labels[type] || '' });
+                          }}
+                          className="w-full bg-slate-700 border border-pink-500/30 text-white rounded-md px-3 py-2 text-sm"
+                        >
+                          <option value="">Selecione...</option>
+                          <option value="credit">Cartão de Crédito</option>
+                          <option value="debit">Cartão de Débito</option>
+                          <option value="pix">PIX</option>
+                          <option value="other">Outro</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-slate-300 text-sm">Nome/Label</Label>
+                        <Input
+                          value={paymentFeeForm.label}
+                          onChange={(e) => setPaymentFeeForm({ ...paymentFeeForm, label: e.target.value })}
+                          className="bg-slate-700 border-pink-500/30 text-white"
+                          placeholder="Ex: Cartão de Crédito Visa"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-slate-300 flex items-center gap-1 text-sm">
+                          <Percent className="w-3 h-3" /> Taxa (%)
+                        </Label>
+                        <Input
+                          type="number" step="0.01"
+                          value={paymentFeeForm.feePercentage}
+                          onChange={(e) => setPaymentFeeForm({ ...paymentFeeForm, feePercentage: e.target.value })}
+                          className="bg-slate-700 border-pink-500/30 text-white"
+                          placeholder="Ex: 3.50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-slate-300 flex items-center gap-1 text-sm">
+                          <DollarSign className="w-3 h-3" /> Mínimo (R$)
+                        </Label>
+                        <Input
+                          type="number" step="0.01"
+                          value={paymentFeeForm.minFee}
+                          onChange={(e) => setPaymentFeeForm({ ...paymentFeeForm, minFee: e.target.value })}
+                          className="bg-slate-700 border-pink-500/30 text-white"
+                          placeholder="Ex: 2.00"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-slate-300 flex items-center gap-1 text-sm">
+                          <DollarSign className="w-3 h-3" /> Máximo (R$)
+                        </Label>
+                        <Input
+                          type="number" step="0.01"
+                          value={paymentFeeForm.maxFee}
+                          onChange={(e) => setPaymentFeeForm({ ...paymentFeeForm, maxFee: e.target.value })}
+                          className="bg-slate-700 border-pink-500/30 text-white"
+                          placeholder="Ex: 50.00"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Preview calculation */}
+                    {paymentFeeForm.feePercentage && (
+                      <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-600/30">
+                        <p className="text-xs text-slate-400 mb-2">Simulação:</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                          {[100, 500, 1000, 2000].map((val) => {
+                            const pct = parseFloat(paymentFeeForm.feePercentage) || 0;
+                            const min = parseFloat(paymentFeeForm.minFee) || 0;
+                            const max = parseFloat(paymentFeeForm.maxFee) || Infinity;
+                            let fee = (val * pct) / 100;
+                            fee = Math.max(fee, min);
+                            fee = Math.min(fee, max);
+                            return (
+                              <div key={val} className="bg-slate-700 p-2 rounded text-center">
+                                <p className="text-slate-400">R$ {val}</p>
+                                <p className="text-pink-400 font-semibold">R$ {fee.toFixed(2)}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Button onClick={handleSavePaymentFee} disabled={createPaymentFeeMutation.isPending || updatePaymentFeeMutation.isPending} className="bg-gradient-to-r from-pink-500 to-pink-400 text-white font-semibold flex-1 sm:flex-none">
+                        {editingFeeId ? 'Atualizar Taxa' : 'Criar Taxa'}
+                      </Button>
+                      <Button variant="outline" onClick={resetFeeForm} className="border-slate-600 text-slate-400 hover:bg-slate-700">
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

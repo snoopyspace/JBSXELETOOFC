@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, username, LEFT(passwordHash, 50) as hash_preview FROM admin_users;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 24qoFEQo37pAuNZ.0436c89d6e66 --database 4ufiTAguMpYft9f8JCRftq --execute SELECT id, username, LEFT(passwordHash, 50) as hash_preview FROM admin_users;",
+  "rows": [
+    {
+      "id": "1",
+      "username": "JBLXELETRO.DEV",
+      "hash_preview": "067ef263c88eee7a140f45997af4ca91:6bf5e3f63ea4f2ba0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tusername\thash_preview\n1\tJBLXELETRO.DEV\t067ef263c88eee7a140f45997af4ca91:6bf5e3f63ea4f2ba0\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

@@ -50,3 +50,9 @@
 - [x] Incluir badges de confiança (qualidade, segurança, atendimento)
 - [x] Garantir responsividade mobile da seção hero
 - [x] Corrigir botão Admin que não está funcionando na página inicial
+- [x] Implementar login admin com usuário/senha próprio (JBLXELETRO.DEV / War86War)
+- [x] Melhorar edição de frete e taxas de cartões no painel admin (mais fácil criar/editar)
+- [x] Adicionar botão "Ver Detalhes" nos cards de produto da tela principal
+- [x] Conectar página de detalhes do produto ao painel admin (descrição, fotos, vídeos)
+- [x] Corrigir responsividade completa do painel admin e site
+- [x] Testar todas as funcionalidades e corrigir erros encontrados

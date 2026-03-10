@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { ShoppingCart, Menu, X, LogIn, Instagram, MessageCircle, Calculator, Search, FileText, Shield, Award, Headphones, Star, ChevronRight, Zap, CheckCircle } from "lucide-react";
+import { ShoppingCart, Menu, X, LogIn, Instagram, MessageCircle, Calculator, Search, FileText, Shield, Award, Headphones, Star, ChevronRight, Zap, CheckCircle, Eye } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import UnifiedCalculator from "@/components/UnifiedCalculator";
@@ -540,16 +540,27 @@ Aguardo retorno!
                         )}
                       </div>
 
-                      {/* Add to Cart Button */}
-                      <Button
-                        onClick={() => handleAddToCart(product)}
-                        disabled={product.stock === 0}
-                        className="w-full bg-gradient-to-r from-cyan-500 to-cyan-400 hover:shadow-lg hover:shadow-cyan-500/50 text-slate-900 font-semibold text-sm md:text-base py-2 md:py-3"
-                      >
-                        <ShoppingCart className="w-4 h-4 mr-1 md:mr-2" />
-                        <span className="hidden md:inline">Adicionar ao Carrinho</span>
-                        <span className="md:hidden">Adicionar</span>
-                      </Button>
+                      {/* Action Buttons */}
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => setLocation(`/product/${product.id}`)}
+                          variant="outline"
+                          className="flex-1 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 font-semibold text-xs md:text-sm py-2 md:py-3"
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          <span className="hidden sm:inline">Ver Detalhes</span>
+                          <span className="sm:hidden">Detalhes</span>
+                        </Button>
+                        <Button
+                          onClick={() => handleAddToCart(product)}
+                          disabled={product.stock === 0}
+                          className="flex-1 bg-gradient-to-r from-cyan-500 to-cyan-400 hover:shadow-lg hover:shadow-cyan-500/50 text-slate-900 font-semibold text-xs md:text-sm py-2 md:py-3"
+                        >
+                          <ShoppingCart className="w-4 h-4 mr-1" />
+                          <span className="hidden sm:inline">Comprar</span>
+                          <span className="sm:hidden">Comprar</span>
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

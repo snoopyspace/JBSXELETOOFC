@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE admin_users SET passwordHash = '39a485b41770912f8f433069510a1c31:ad88b60b401174027e750ba710ef449bf3ace78ab51f37ecc79c5114b9d85b30c03b97c2711cd04dd9f99e76e8af2713c5e47b086a13250f6eaaa56a92e4086e' WHERE username = 'JBLXELETRO.DEV';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 24qoFEQo37pAuNZ.0436c89d6e66 --database 4ufiTAguMpYft9f8JCRftq --execute UPDATE admin_users SET passwordHash = '39a485b41770912f8f433069510a1c31:ad88b60b401174027e750ba710ef449bf3ace78ab51f37ecc79c5114b9d85b30c03b97c2711cd04dd9f99e76e8af2713c5e47b086a13250f6eaaa56a92e4086e' WHERE username = 'JBLXELETRO.DEV';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 66
+}

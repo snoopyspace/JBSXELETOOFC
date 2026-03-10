@@ -86,6 +86,8 @@ export type InsertShippingConfig = typeof shippingConfig.$inferInsert;
 // Payment fee configuration table
 export const paymentFeeConfig = mysqlTable("paymentFeeConfig", {
   id: int("id").autoincrement().primaryKey(),
+  cardType: varchar("cardType", { length: 50 }).notNull().default("credit"),
+  label: varchar("label", { length: 100 }).notNull().default("Cartão de Crédito"),
   feePercentage: decimal("feePercentage", { precision: 5, scale: 2 }).notNull(),
   minFee: decimal("minFee", { precision: 10, scale: 2 }).notNull(),
   maxFee: decimal("maxFee", { precision: 10, scale: 2 }).notNull(),
@@ -128,3 +130,16 @@ export const questions = mysqlTable("questions", {
 
 export type Question = typeof questions.$inferSelect;
 export type InsertQuestion = typeof questions.$inferInsert;
+
+// Admin users table (independent login)
+export const adminUsers = mysqlTable("admin_users", {
+  id: int("id").autoincrement().primaryKey(),
+  username: varchar("username", { length: 64 }).notNull().unique(),
+  passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
+  name: varchar("name", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AdminUser = typeof adminUsers.$inferSelect;
+export type InsertAdminUser = typeof adminUsers.$inferInsert;
