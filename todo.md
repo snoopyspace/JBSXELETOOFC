@@ -49,3 +49,4 @@
 - [x] Implementar design premium com gradientes e animações do tema JBSX Eletro
 - [x] Incluir badges de confiança (qualidade, segurança, atendimento)
 - [x] Garantir responsividade mobile da seção hero
+- [x] Corrigir botão Admin que não está funcionando na página inicial

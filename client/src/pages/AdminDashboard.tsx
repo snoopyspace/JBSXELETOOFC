@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
+import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -222,19 +223,70 @@ export default function AdminDashboard() {
     return products.filter((p) => p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q));
   }, [products, searchQuery]);
 
-  // Auth check
-  useEffect(() => {
-    if (!loading && (!user || user.role !== "admin")) {
-      setLocation("/");
-    }
-  }, [user, loading, setLocation]);
-
+  // Auth check - show login screen instead of silent redirect
   if (loading) return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center">
       <div className="animate-spin w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full" />
     </div>
   );
-  if (!user || user.role !== "admin") return null;
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center px-4">
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-cyan-500/20 to-pink-500/20 border border-cyan-500/30 flex items-center justify-center">
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663411798042/4ufiTAguMpYft9f8JCRftq/icon-192x192_aefadb0d.png"
+              alt="JBSX Eletro"
+              className="w-14 h-14 rounded-xl"
+            />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white mb-2">Painel Administrativo</h1>
+            <p className="text-slate-400">Faça login para acessar o painel de gestão da JBSX Eletro</p>
+          </div>
+          <Button
+            onClick={() => { window.location.href = getLoginUrl(); }}
+            className="w-full bg-gradient-to-r from-cyan-500 to-cyan-400 hover:shadow-lg hover:shadow-cyan-500/40 text-slate-900 font-bold py-6 text-lg rounded-xl transition-all"
+          >
+            Entrar com Manus
+          </Button>
+          <Button
+            onClick={() => setLocation("/")}
+            variant="outline"
+            className="w-full border-slate-700 text-slate-400 hover:bg-slate-800 py-5 rounded-xl"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar para a Loja
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (user.role !== "admin") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center px-4">
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="w-20 h-20 mx-auto rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center">
+            <XCircle className="w-10 h-10 text-red-400" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white mb-2">Acesso Restrito</h1>
+            <p className="text-slate-400">Você não tem permissão de administrador para acessar este painel.</p>
+            <p className="text-slate-500 text-sm mt-2">Logado como: {user.name || user.email}</p>
+          </div>
+          <Button
+            onClick={() => setLocation("/")}
+            className="w-full bg-gradient-to-r from-cyan-500 to-cyan-400 hover:shadow-lg hover:shadow-cyan-500/40 text-slate-900 font-bold py-6 text-lg rounded-xl transition-all"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar para a Loja
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const navItems = [
     { id: "dashboard" as Tab, label: "Painel", icon: Home },
