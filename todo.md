@@ -16,3 +16,11 @@
 - [x] Criar checkpoint e entregar
 - [x] Corrigir links de Termos de Aceite e Política de Troca no Checkout (404 nos arquivos .txt)
 - [x] Alterar link do Vivale no Checkout de tel: para WhatsApp
+- [x] Atualizar ícone/logo do site com nova imagem fornecida
+- [x] Atualizar favicon da aba do navegador
+- [x] Configurar PWA (manifest.json, service worker, meta tags)
+- [x] Configurar PWAInstallPrompt personalizado com tema da loja
+- [x] Gerar ícones em múltiplos tamanhos para PWA (192x192, 512x512, apple-touch-icon)
+- [x] Corrigir SEO: título da página (30-60 caracteres)
+- [x] Corrigir SEO: meta description (50-160 caracteres)
+- [x] Corrigir SEO: palavras-chave na página

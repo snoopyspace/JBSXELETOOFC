@@ -136,6 +136,11 @@ export default function Home() {
     productDescription: "",
   });
 
+  // SEO - definir título da página
+  useEffect(() => {
+    document.title = "JBSX Eletro - Eletrônicos Premium e Importados";
+  }, []);
+
   // Fetch categories
   const categoriesQuery = trpc.categories.list.useQuery();
 
@@ -283,9 +288,11 @@ Aguardo retorno!
       <header className="sticky top-0 z-40 bg-gradient-to-r from-slate-900 to-slate-800 border-b border-cyan-500/20 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-pink-500 rounded-lg flex items-center justify-center">
-              <ShoppingCart className="w-6 h-6 text-white" />
-            </div>
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663411798042/4ufiTAguMpYft9f8JCRftq/icon-48x48_aefadb0d.png"
+              alt="JBSX Eletro"
+              className="w-10 h-10 rounded-lg"
+            />
             <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
               JBSX Eletro
             </h1>
