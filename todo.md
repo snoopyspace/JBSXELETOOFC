@@ -15,3 +15,4 @@
 - [x] Verificar servidor funcionando corretamente
 - [x] Criar checkpoint e entregar
 - [x] Corrigir links de Termos de Aceite e Política de Troca no Checkout (404 nos arquivos .txt)
+- [x] Alterar link do Vivale no Checkout de tel: para WhatsApp

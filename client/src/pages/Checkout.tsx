@@ -200,7 +200,7 @@ ${paymentText}${installmentDetails}
           <p className="text-slate-400">
             Desenvolvido por{" "}
             <a
-              href="tel:85999618245"
+              href="https://wa.me/5585999618245?text=ol%C3%A1%2C%20acabei%20de%20ver%20seu%20site%20jbsx%20e%20gostaria%20de%20seus%20servi%C3%A7os%20de%20dev."
               className="text-cyan-400 hover:text-pink-400 font-semibold transition-colors"
             >
               Vivale
