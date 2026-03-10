@@ -57,3 +57,4 @@
 - [x] Corrigir responsividade completa do painel admin e site
 - [x] Testar todas as funcionalidades e corrigir erros encontrados
 - [x] Verificar e salvar tag Google Ads (AW-18006443138) no index.html para publicação
+- [x] Corrigir responsividade dos cards de produto no celular/tablet - informações cortadas
