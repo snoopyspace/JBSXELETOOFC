@@ -516,7 +516,7 @@ export default function OrderForm({ cart, onSubmit }: OrderFormProps) {
                 <span className="font-semibold text-white">Li e concordo com os Termos de Aceite e Política de Troca, Devolução e Garantia</span>
                 <div className="flex gap-2 mt-2 flex-wrap">
                   <a
-                    href="/termos-aceite.txt"
+                    href="/terms?tab=terms"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 text-xs font-semibold transition-colors"
@@ -525,7 +525,7 @@ export default function OrderForm({ cart, onSubmit }: OrderFormProps) {
                     Termos de Aceite
                   </a>
                   <a
-                    href="/politica-troca.txt"
+                    href="/terms?tab=policy"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 text-xs font-semibold transition-colors"

@@ -14,3 +14,4 @@
 - [x] Importar dados existentes (10 categorias, 15 produtos, 1 usuário admin)
 - [x] Verificar servidor funcionando corretamente
 - [x] Criar checkpoint e entregar
+- [x] Corrigir links de Termos de Aceite e Política de Troca no Checkout (404 nos arquivos .txt)

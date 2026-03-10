@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
+import { useState, useEffect } from "react";
+import { useLocation, useSearch } from "wouter";
 import { ArrowLeft } from "lucide-react";
 
 const TERMOS_CONTENT = `Termo de Aceite – Condições de Compra
@@ -204,7 +204,10 @@ Esta política poderá ser atualizada a qualquer momento, visando adequação à
 
 export default function Terms() {
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<"terms" | "policy">("terms");
+  const searchString = useSearch();
+  const params = new URLSearchParams(searchString);
+  const initialTab = params.get("tab") === "policy" ? "policy" : "terms";
+  const [activeTab, setActiveTab] = useState<"terms" | "policy">(initialTab);
 
   const formatContent = (text: string) => {
     return text.split("\n").map((line, index) => {
