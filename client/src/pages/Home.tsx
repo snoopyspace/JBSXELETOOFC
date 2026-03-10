@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { ShoppingCart, Menu, X, LogIn, Instagram, MessageCircle, Calculator, Search, FileText } from "lucide-react";
+import { ShoppingCart, Menu, X, LogIn, Instagram, MessageCircle, Calculator, Search, FileText, Shield, Award, Headphones, Star, ChevronRight, Zap, CheckCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import UnifiedCalculator from "@/components/UnifiedCalculator";
@@ -347,8 +347,115 @@ Aguardo retorno!
         )}
       </header>
 
+      {/* ===== HERO SECTION - Apresentação Premium ===== */}
+      <section className="relative overflow-hidden">
+        {/* Background Effects */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-10 left-10 w-72 h-72 bg-cyan-500 rounded-full blur-[120px]" />
+          <div className="absolute bottom-10 right-10 w-72 h-72 bg-pink-500 rounded-full blur-[120px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500 rounded-full blur-[150px] opacity-30" />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 py-12 sm:py-16 lg:py-20">
+          <div className="text-center max-w-4xl mx-auto space-y-6 sm:space-y-8">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium">
+              <Zap className="w-4 h-4" />
+              Eletrônicos Premium e Importados
+            </div>
+
+            {/* Título Principal */}
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight">
+              <span className="text-white">Tecnologia Premium com </span>
+              <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                Confiança e Credibilidade
+              </span>
+            </h2>
+
+            {/* Subtítulo */}
+            <p className="text-lg sm:text-xl text-slate-300 leading-relaxed max-w-3xl mx-auto">
+              Na JBSX Eletro, você encontra produtos de alta qualidade, marcas reconhecidas e a segurança de comprar com quem valoriza excelência e compromisso com o cliente.
+            </p>
+
+            {/* Texto Persuasivo */}
+            <p className="text-base text-slate-400 leading-relaxed max-w-2xl mx-auto">
+              Trabalhamos com eletrônicos premium e produtos selecionados para oferecer desempenho, inovação e confiabilidade em cada compra. Nosso compromisso é entregar qualidade, transparência e um atendimento que transmite segurança do início ao fim. Cada detalhe é pensado para que você tenha a melhor experiência e a confiança de estar escolhendo o lugar certo para investir em tecnologia.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+              <Button
+                onClick={() => {
+                  const productsSection = document.getElementById('products-section');
+                  productsSection?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="bg-gradient-to-r from-cyan-500 to-cyan-400 hover:shadow-lg hover:shadow-cyan-500/40 text-slate-900 font-bold px-8 py-6 text-lg rounded-xl transition-all"
+              >
+                <ShoppingCart className="w-5 h-5 mr-2" />
+                Conheça Nossos Produtos
+              </Button>
+              <Button
+                onClick={() => {
+                  const whatsappUrl = 'https://wa.me/558591751934?text=Ol%C3%A1!%20Gostaria%20de%20saber%20mais%20sobre%20os%20produtos%20da%20JBSX%20Eletro.';
+                  window.open(whatsappUrl, '_blank');
+                }}
+                variant="outline"
+                className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 font-semibold px-8 py-6 text-lg rounded-xl transition-all"
+              >
+                <MessageCircle className="w-5 h-5 mr-2" />
+                Fale Conosco
+              </Button>
+            </div>
+          </div>
+
+          {/* Trust Badges */}
+          <div className="mt-12 sm:mt-16 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-4xl mx-auto">
+            <div className="flex flex-col items-center gap-3 p-4 sm:p-5 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 transition-colors">
+              <div className="w-12 h-12 rounded-full bg-cyan-500/10 flex items-center justify-center">
+                <Shield className="w-6 h-6 text-cyan-400" />
+              </div>
+              <div className="text-center">
+                <p className="text-white font-semibold text-sm">Compra Segura</p>
+                <p className="text-slate-500 text-xs mt-1">Proteção total</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-3 p-4 sm:p-5 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-pink-500/30 transition-colors">
+              <div className="w-12 h-12 rounded-full bg-pink-500/10 flex items-center justify-center">
+                <Award className="w-6 h-6 text-pink-400" />
+              </div>
+              <div className="text-center">
+                <p className="text-white font-semibold text-sm">Qualidade Premium</p>
+                <p className="text-slate-500 text-xs mt-1">Marcas reconhecidas</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-3 p-4 sm:p-5 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-purple-500/30 transition-colors">
+              <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center">
+                <Headphones className="w-6 h-6 text-purple-400" />
+              </div>
+              <div className="text-center">
+                <p className="text-white font-semibold text-sm">Atendimento</p>
+                <p className="text-slate-500 text-xs mt-1">Suporte dedicado</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-3 p-4 sm:p-5 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-green-500/30 transition-colors">
+              <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-green-400" />
+              </div>
+              <div className="text-center">
+                <p className="text-white font-semibold text-sm">Garantia</p>
+                <p className="text-slate-500 text-xs mt-1">Compromisso real</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
+      </section>
+
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div id="products-section" className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Sidebar - Categories */}
           <div className="hidden md:block">

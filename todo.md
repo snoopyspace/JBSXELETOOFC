@@ -45,3 +45,7 @@
 - [x] Adicionar seção de gerenciamento de avaliações e perguntas no painel Admin
 - [x] Proteção contra spam e envios duplicados
 - [x] Layout responsivo (desktop, tablet, celular) com identidade JBSX Eletro
+- [x] Criar seção hero de apresentação na página inicial com título, subtítulo, texto persuasivo e CTA
+- [x] Implementar design premium com gradientes e animações do tema JBSX Eletro
+- [x] Incluir badges de confiança (qualidade, segurança, atendimento)
+- [x] Garantir responsividade mobile da seção hero
