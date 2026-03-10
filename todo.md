@@ -56,3 +56,4 @@
 - [x] Conectar página de detalhes do produto ao painel admin (descrição, fotos, vídeos)
 - [x] Corrigir responsividade completa do painel admin e site
 - [x] Testar todas as funcionalidades e corrigir erros encontrados
+- [x] Verificar e salvar tag Google Ads (AW-18006443138) no index.html para publicação
