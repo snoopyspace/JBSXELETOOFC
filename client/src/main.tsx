@@ -8,6 +8,29 @@ import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
 
+// SEO - Definir título e meta tags imediatamente (antes do React render)
+document.title = "JBSX Eletro - Eletrônicos Premium e Importados";
+
+// Garantir meta description
+const SEO_DESCRIPTION = "JBSX Eletro: loja de eletrônicos premium e importados. Drones DJI, Apple, Garmin, câmeras, notebooks e mais com garantia e entrega para todo o Brasil.";
+let metaDesc = document.querySelector('meta[name="description"]');
+if (!metaDesc) {
+  metaDesc = document.createElement('meta');
+  metaDesc.setAttribute('name', 'description');
+  document.head.appendChild(metaDesc);
+}
+metaDesc.setAttribute('content', SEO_DESCRIPTION);
+
+// Garantir meta keywords
+const SEO_KEYWORDS = "eletrônicos premium, drones DJI, Apple AirPods, Garmin, câmeras, notebooks, importados, JBSX Eletro, loja eletrônicos";
+let metaKeywords = document.querySelector('meta[name="keywords"]');
+if (!metaKeywords) {
+  metaKeywords = document.createElement('meta');
+  metaKeywords.setAttribute('name', 'keywords');
+  document.head.appendChild(metaKeywords);
+}
+metaKeywords.setAttribute('content', SEO_KEYWORDS);
+
 const queryClient = new QueryClient();
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {

@@ -24,3 +24,4 @@
 - [x] Corrigir SEO: título da página (30-60 caracteres)
 - [x] Corrigir SEO: meta description (50-160 caracteres)
 - [x] Corrigir SEO: palavras-chave na página
+- [x] Corrigir SEO persistente: título 11 chars, sem description, sem keywords detectadas
