@@ -25,3 +25,12 @@
 - [x] Corrigir SEO: meta description (50-160 caracteres)
 - [x] Corrigir SEO: palavras-chave na página
 - [x] Corrigir SEO persistente: título 11 chars, sem description, sem keywords detectadas
+- [x] Atualizar schema: adicionar description, videoUrl, gallery (múltiplas fotos) nos produtos
+- [x] Atualizar rotas backend para suportar novos campos de produtos
+- [x] Reconstruir painel Admin responsivo e mobile-first
+- [x] Admin: gestão completa de categorias (CRUD)
+- [x] Admin: gestão completa de produtos com fotos e vídeos
+- [x] Admin: lista de pedidos com registro e visualização
+- [x] Admin: curva ABC de produtos
+- [x] Criar página individual de produto (/product/:id) com descrição, fotos e vídeos
+- [x] Garantir compatibilidade mobile em todas as novas telas

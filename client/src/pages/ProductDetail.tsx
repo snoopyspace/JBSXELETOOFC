@@ -1,0 +1,274 @@
+import { useState, useEffect } from "react";
+import { useRoute, useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  ArrowLeft, ShoppingCart, ChevronLeft, ChevronRight, Play, Package,
+  Truck, Shield, Share2, Heart,
+} from "lucide-react";
+
+export default function ProductDetail() {
+  const [, params] = useRoute("/product/:id");
+  const [, setLocation] = useLocation();
+  const productId = params?.id ? parseInt(params.id) : 0;
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showVideo, setShowVideo] = useState(false);
+
+  const { data: product, isLoading } = trpc.products.get.useQuery(
+    { id: productId },
+    { enabled: productId > 0 }
+  );
+  const { data: categories } = trpc.categories.list.useQuery();
+  const { data: allProducts } = trpc.products.list.useQuery();
+
+  useEffect(() => {
+    if (product) {
+      document.title = `${product.name} - JBSX Eletro`;
+    }
+    return () => { document.title = "JBSX Eletro - Eletrônicos Premium e Importados"; };
+  }, [product]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4">
+        <Package className="w-16 h-16 text-slate-600" />
+        <p className="text-slate-400 text-lg">Produto não encontrado</p>
+        <Button onClick={() => setLocation("/")} className="bg-cyan-500 text-slate-900">Voltar à Loja</Button>
+      </div>
+    );
+  }
+
+  // Build image gallery
+  const allImages: string[] = [];
+  if (product.image) allImages.push(product.image);
+  if (product.gallery) {
+    const gallery = product.gallery as string[];
+    gallery.forEach((img) => { if (!allImages.includes(img)) allImages.push(img); });
+  }
+
+  const category = categories?.find((c) => c.id === product.categoryId);
+  const relatedProducts = allProducts?.filter(
+    (p) => p.id !== product.id && p.categoryId === product.categoryId
+  ).slice(0, 4);
+
+  const isYouTube = product.videoUrl?.includes("youtube") || product.videoUrl?.includes("youtu.be");
+  const getYouTubeEmbedUrl = (url: string) => {
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    return match ? `https://www.youtube.com/embed/${match[1]}` : url;
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({ title: product.name, url: window.location.href });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert("Link copiado!");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-sm border-b border-cyan-500/20 px-4 py-3">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <button onClick={() => window.history.length > 1 ? window.history.back() : setLocation("/")} className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-sm hidden sm:inline">Voltar</span>
+          </button>
+          <h1 className="text-sm font-semibold text-white truncate max-w-[200px] sm:max-w-none">{product.name}</h1>
+          <div className="flex gap-2">
+            <button onClick={handleShare} className="p-2 text-slate-400 hover:text-cyan-400 transition-colors">
+              <Share2 className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Image Gallery */}
+          <div className="space-y-4">
+            {/* Main Image/Video */}
+            <div className="relative aspect-square bg-slate-800 rounded-2xl overflow-hidden border border-cyan-500/10">
+              {showVideo && product.videoUrl ? (
+                <div className="w-full h-full">
+                  {isYouTube ? (
+                    <iframe
+                      src={getYouTubeEmbedUrl(product.videoUrl)}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <video src={product.videoUrl} controls autoPlay className="w-full h-full object-contain" />
+                  )}
+                </div>
+              ) : allImages.length > 0 ? (
+                <>
+                  <img
+                    src={allImages[currentImageIndex]}
+                    alt={product.name}
+                    className="w-full h-full object-contain p-4"
+                  />
+                  {allImages.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length)}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 p-2 rounded-full text-white hover:bg-black/70 transition-colors"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => setCurrentImageIndex((prev) => (prev + 1) % allImages.length)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 p-2 rounded-full text-white hover:bg-black/70 transition-colors"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                        {allImages.map((_, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setCurrentImageIndex(i)}
+                            className={`w-2 h-2 rounded-full transition-colors ${i === currentImageIndex ? "bg-cyan-400" : "bg-white/40"}`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Package className="w-24 h-24 text-slate-600" />
+                </div>
+              )}
+            </div>
+
+            {/* Thumbnails + Video button */}
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {allImages.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => { setCurrentImageIndex(i); setShowVideo(false); }}
+                  className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
+                    !showVideo && i === currentImageIndex ? "border-cyan-400" : "border-slate-700"
+                  }`}
+                >
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+              {product.videoUrl && (
+                <button
+                  onClick={() => setShowVideo(true)}
+                  className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 flex items-center justify-center bg-slate-800 transition-colors ${
+                    showVideo ? "border-pink-400" : "border-slate-700"
+                  }`}
+                >
+                  <Play className="w-6 h-6 text-pink-400" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Product Info */}
+          <div className="space-y-6">
+            {category && (
+              <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">{category.name}</Badge>
+            )}
+            <h2 className="text-2xl sm:text-3xl font-bold text-white leading-tight">{product.name}</h2>
+
+            <div className="flex items-baseline gap-3">
+              <span className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
+                R$ {parseFloat(product.price).toFixed(2)}
+              </span>
+            </div>
+
+            {/* Stock */}
+            <div className="flex items-center gap-2">
+              {product.stock > 0 ? (
+                <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                  Em estoque ({product.stock} unidades)
+                </Badge>
+              ) : (
+                <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Fora de estoque</Badge>
+              )}
+            </div>
+
+            {/* Description */}
+            {product.description && (
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-white">Descrição</h3>
+                <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">{product.description}</p>
+              </div>
+            )}
+
+            {/* Weight */}
+            {product.weight && parseFloat(product.weight) > 0 && (
+              <p className="text-slate-400 text-sm">Peso: {product.weight} kg</p>
+            )}
+
+            {/* CTA */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
+              <Button
+                onClick={() => setLocation("/checkout")}
+                className="flex-1 bg-gradient-to-r from-cyan-500 to-pink-500 text-white font-bold py-6 text-lg rounded-xl hover:opacity-90 transition-opacity"
+                disabled={product.stock === 0}
+              >
+                <ShoppingCart className="w-5 h-5 mr-2" />
+                {product.stock > 0 ? "Fazer Pedido" : "Indisponível"}
+              </Button>
+            </div>
+
+            {/* Trust badges */}
+            <div className="grid grid-cols-2 gap-3 pt-4">
+              <div className="flex items-center gap-2 p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                <Truck className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+                <span className="text-slate-300 text-xs">Entrega para todo Brasil</span>
+              </div>
+              <div className="flex items-center gap-2 p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                <Shield className="w-5 h-5 text-green-400 flex-shrink-0" />
+                <span className="text-slate-300 text-xs">Garantia de qualidade</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Related Products */}
+        {relatedProducts && relatedProducts.length > 0 && (
+          <div className="mt-12 space-y-6">
+            <h3 className="text-xl font-bold text-white">Produtos Relacionados</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {relatedProducts.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setLocation(`/product/${p.id}`)}
+                  className="bg-slate-800/80 rounded-xl overflow-hidden border border-cyan-500/10 hover:border-cyan-500/30 transition-all text-left group"
+                >
+                  <div className="aspect-square bg-slate-700/50 overflow-hidden">
+                    {p.image ? (
+                      <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><Package className="w-8 h-8 text-slate-600" /></div>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <p className="text-white text-sm font-medium truncate">{p.name}</p>
+                    <p className="text-cyan-400 font-bold text-sm mt-1">R$ {parseFloat(p.price).toFixed(2)}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -39,6 +39,8 @@ export const products = mysqlTable("products", {
   stock: int("stock").default(0).notNull(),
   weight: decimal("weight", { precision: 8, scale: 3 }).default("0"),
   image: text("image"),
+  videoUrl: text("videoUrl"),
+  gallery: json("gallery").$type<string[]>(),
   categoryId: int("categoryId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

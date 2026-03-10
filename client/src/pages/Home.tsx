@@ -384,12 +384,15 @@ Aguardo retorno!
                 >
                   <CardContent className="p-0 flex flex-col h-full">
                     {/* Product Image */}
-                    <div className="w-full aspect-square bg-gradient-to-br from-slate-700 to-slate-800 overflow-hidden flex items-center justify-center">
+                    <div
+                      className="w-full aspect-square bg-gradient-to-br from-slate-700 to-slate-800 overflow-hidden flex items-center justify-center cursor-pointer"
+                      onClick={() => setLocation(`/product/${product.id}`)}
+                    >
                       {product.image ? (
                         <img
                           src={product.image}
                           alt={product.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover hover:scale-105 transition-transform"
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
@@ -400,7 +403,10 @@ Aguardo retorno!
 
                     {/* Product Info */}
                     <div className="p-4 flex flex-col flex-1">
-                      <h3 className="font-semibold text-white line-clamp-2 mb-2">
+                      <h3
+                        className="font-semibold text-white line-clamp-2 mb-2 cursor-pointer hover:text-cyan-400 transition-colors"
+                        onClick={() => setLocation(`/product/${product.id}`)}
+                      >
                         {product.name}
                       </h3>
                       {product.description && (
