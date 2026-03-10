@@ -8,12 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { getLoginUrl } from "@/const";
 import {
   Plus, Trash2, Edit2, Package, ShoppingCart, Settings, FolderTree,
   BarChart3, Menu, X, ArrowLeft, Upload, Video, Image as ImageIcon,
   Eye, ChevronDown, ChevronUp, Search, Home, TrendingUp,
   Star, MessageSquare, CheckCircle, XCircle, Clock, Send, HelpCircle,
-  LogIn, LogOut, Lock, CreditCard, Truck, DollarSign, Percent,
+  LogIn, LogOut, Lock, CreditCard, Truck, DollarSign, Percent, ShieldAlert,
 } from "lucide-react";
 
 type Tab = "dashboard" | "categories" | "products" | "orders" | "abc" | "reviews" | "settings";
@@ -36,43 +38,9 @@ export default function AdminDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Admin auth state
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
-  const [adminLoading, setAdminLoading] = useState(true);
-  const [loginForm, setLoginForm] = useState({ username: "", password: "" });
-  const [loginError, setLoginError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-
-  // Check admin session
-  const { data: adminSession, refetch: refetchAdminSession } = trpc.adminAuth.me.useQuery(undefined, {
-    retry: false,
-  });
-  const adminLoginMutation = trpc.adminAuth.login.useMutation({
-    onSuccess: () => {
-      setIsAdminLoggedIn(true);
-      setLoginError("");
-      refetchAdminSession();
-      toast.success("Login realizado com sucesso!");
-    },
-    onError: (e) => {
-      setLoginError("Usuário ou senha inválidos");
-      toast.error("Credenciais inválidas");
-    },
-  });
-  const adminLogoutMutation = trpc.adminAuth.logout.useMutation({
-    onSuccess: () => {
-      setIsAdminLoggedIn(false);
-      refetchAdminSession();
-      toast.success("Logout realizado!");
-    },
-  });
-
-  useEffect(() => {
-    if (adminSession !== undefined) {
-      setIsAdminLoggedIn(!!adminSession);
-      setAdminLoading(false);
-    }
-  }, [adminSession]);
+  // Manus OAuth auth
+  const { user, loading: authLoading, logout, isAuthenticated } = useAuth();
+  const isAdmin = isAuthenticated && user?.role === "admin";
 
   // Product form state
   const [showProductForm, setShowProductForm] = useState(false);
@@ -98,14 +66,14 @@ export default function AdminDashboard() {
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
 
   // Queries
-  const { data: products, refetch: refetchProducts } = trpc.products.list.useQuery(undefined, { enabled: isAdminLoggedIn });
-  const { data: categories, refetch: refetchCategories } = trpc.categories.list.useQuery(undefined, { enabled: isAdminLoggedIn });
-  const { data: orders, refetch: refetchOrders } = trpc.orders.list.useQuery(undefined, { enabled: isAdminLoggedIn });
-  const { data: shippingConfig } = trpc.shippingConfig.get.useQuery(undefined, { enabled: isAdminLoggedIn });
-  const { data: paymentFeeConfig } = trpc.paymentFeeConfig.get.useQuery(undefined, { enabled: isAdminLoggedIn });
-  const { data: allPaymentFees, refetch: refetchPaymentFees } = trpc.paymentFeeConfig.getAll.useQuery(undefined, { enabled: isAdminLoggedIn });
-  const { data: allReviews, refetch: refetchReviews } = trpc.reviews.all.useQuery(undefined, { enabled: isAdminLoggedIn });
-  const { data: allQuestions, refetch: refetchQuestions } = trpc.questions.all.useQuery(undefined, { enabled: isAdminLoggedIn });
+  const { data: products, refetch: refetchProducts } = trpc.products.list.useQuery(undefined, { enabled: isAdmin });
+  const { data: categories, refetch: refetchCategories } = trpc.categories.list.useQuery(undefined, { enabled: isAdmin });
+  const { data: orders, refetch: refetchOrders } = trpc.orders.list.useQuery(undefined, { enabled: isAdmin });
+  const { data: shippingConfig } = trpc.shippingConfig.get.useQuery(undefined, { enabled: isAdmin });
+  const { data: paymentFeeConfig } = trpc.paymentFeeConfig.get.useQuery(undefined, { enabled: isAdmin });
+  const { data: allPaymentFees, refetch: refetchPaymentFees } = trpc.paymentFeeConfig.getAll.useQuery(undefined, { enabled: isAdmin });
+  const { data: allReviews, refetch: refetchReviews } = trpc.reviews.all.useQuery(undefined, { enabled: isAdmin });
+  const { data: allQuestions, refetch: refetchQuestions } = trpc.questions.all.useQuery(undefined, { enabled: isAdmin });
 
   // Init settings forms when data loads
   useEffect(() => {
@@ -147,6 +115,10 @@ export default function AdminDashboard() {
   });
   const updateOrderMutation = trpc.orders.update.useMutation({
     onSuccess: () => { toast.success("Pedido atualizado!"); refetchOrders(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteOrderMutation = trpc.orders.delete.useMutation({
+    onSuccess: () => { toast.success("Pedido deletado!"); refetchOrders(); },
     onError: (e) => toast.error(e.message),
   });
   const uploadImageMutation = trpc.upload.image.useMutation();
@@ -286,14 +258,14 @@ export default function AdminDashboard() {
     return orders.filter((o) => o.status === orderFilter);
   }, [orders, orderFilter]);
 
-  // ===== LOGIN SCREEN =====
-  if (adminLoading) return (
+  // ===== LOGIN / ACCESS SCREEN =====
+  if (authLoading) return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center">
       <div className="animate-spin w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full" />
     </div>
   );
 
-  if (!isAdminLoggedIn) {
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center px-4">
         <div className="max-w-sm w-full">
@@ -307,51 +279,12 @@ export default function AdminDashboard() {
 
           <Card className="bg-slate-900/80 border-cyan-500/20">
             <CardContent className="p-6 space-y-4">
-              {loginError && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-red-400 text-sm text-center">
-                  {loginError}
-                </div>
-              )}
-              <div>
-                <Label className="text-slate-300 text-sm">Usuário</Label>
-                <Input
-                  value={loginForm.username}
-                  onChange={(e) => { setLoginForm({ ...loginForm, username: e.target.value }); setLoginError(""); }}
-                  className="bg-slate-800 border-slate-600 text-white mt-1"
-                  placeholder="Digite seu usuário"
-                  onKeyDown={(e) => e.key === "Enter" && adminLoginMutation.mutate(loginForm)}
-                />
-              </div>
-              <div>
-                <Label className="text-slate-300 text-sm">Senha</Label>
-                <div className="relative mt-1">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    value={loginForm.password}
-                    onChange={(e) => { setLoginForm({ ...loginForm, password: e.target.value }); setLoginError(""); }}
-                    className="bg-slate-800 border-slate-600 text-white pr-12"
-                    placeholder="Digite sua senha"
-                    onKeyDown={(e) => e.key === "Enter" && adminLoginMutation.mutate(loginForm)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
-                  >
-                    {showPassword ? "Ocultar" : "Mostrar"}
-                  </button>
-                </div>
-              </div>
+              <p className="text-slate-300 text-sm text-center">Faça login com sua conta Manus para acessar o painel administrativo.</p>
               <Button
-                onClick={() => adminLoginMutation.mutate(loginForm)}
-                disabled={adminLoginMutation.isPending || !loginForm.username || !loginForm.password}
+                onClick={() => { window.location.href = getLoginUrl(); }}
                 className="w-full bg-gradient-to-r from-cyan-500 to-cyan-400 hover:shadow-lg hover:shadow-cyan-500/30 text-slate-900 font-bold py-5 text-base rounded-xl transition-all"
               >
-                {adminLoginMutation.isPending ? (
-                  <div className="animate-spin w-5 h-5 border-2 border-slate-900 border-t-transparent rounded-full" />
-                ) : (
-                  <><LogIn className="w-5 h-5 mr-2" /> Entrar</>
-                )}
+                <LogIn className="w-5 h-5 mr-2" /> Entrar com Manus
               </Button>
             </CardContent>
           </Card>
@@ -363,6 +296,29 @@ export default function AdminDashboard() {
           >
             <ArrowLeft className="w-4 h-4 mr-2" /> Voltar para a Loja
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center px-4">
+        <div className="max-w-sm w-full text-center">
+          <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-red-500/20 to-orange-500/20 border border-red-500/30 flex items-center justify-center mb-4">
+            <ShieldAlert className="w-10 h-10 text-red-400" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">Acesso Restrito</h1>
+          <p className="text-slate-400 text-sm mb-2">Olá, {user?.name || "usuário"}!</p>
+          <p className="text-slate-500 text-sm mb-6">Sua conta não possui permissão de administrador.</p>
+          <div className="flex flex-col gap-3">
+            <Button onClick={() => setLocation("/")} className="bg-gradient-to-r from-cyan-500 to-cyan-400 text-slate-900 font-semibold">
+              <ArrowLeft className="w-4 h-4 mr-2" /> Voltar para a Loja
+            </Button>
+            <Button onClick={() => logout()} variant="ghost" className="text-red-400 hover:text-red-300">
+              <LogOut className="w-4 h-4 mr-2" /> Sair da Conta
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -531,7 +487,7 @@ export default function AdminDashboard() {
             </div>
             <div>
               <h1 className="text-sm font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">Admin JBSX</h1>
-              <p className="text-xs text-slate-500">{adminSession?.name || adminSession?.username}</p>
+              <p className="text-xs text-slate-500">{user?.name || user?.email}</p>
             </div>
           </div>
         </div>
@@ -555,7 +511,7 @@ export default function AdminDashboard() {
           <button onClick={() => setLocation("/")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
             <ArrowLeft className="w-5 h-5" /> Voltar à Loja
           </button>
-          <button onClick={() => adminLogoutMutation.mutate()} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 transition-all">
+          <button onClick={() => logout()} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 transition-all">
             <LogOut className="w-5 h-5" /> Sair
           </button>
         </div>
@@ -573,7 +529,7 @@ export default function AdminDashboard() {
           <button onClick={() => setLocation("/")} className="text-slate-400 text-xs flex items-center gap-1">
             <ArrowLeft className="w-4 h-4" /> Loja
           </button>
-          <button onClick={() => adminLogoutMutation.mutate()} className="text-red-400 p-1">
+          <button onClick={() => logout()} className="text-red-400 p-1">
             <LogOut className="w-4 h-4" />
           </button>
         </div>
@@ -954,6 +910,33 @@ export default function AdminDashboard() {
                               </Button>
                             ))}
                           </div>
+                        </div>
+
+                        {/* Quick Actions */}
+                        <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-700">
+                          {order.status === "pending" && (
+                            <Button
+                              size="sm"
+                              onClick={() => updateOrderMutation.mutate({ id: order.id, status: "confirmed" })}
+                              className="bg-green-600 hover:bg-green-700 text-white text-xs"
+                              disabled={updateOrderMutation.isPending}
+                            >
+                              <CheckCircle className="w-3.5 h-3.5 mr-1" /> Aprovar Pedido
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              if (window.confirm(`Tem certeza que deseja deletar o pedido #${order.id}?`)) {
+                                deleteOrderMutation.mutate({ id: order.id });
+                              }
+                            }}
+                            className="border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs"
+                            disabled={deleteOrderMutation.isPending}
+                          >
+                            <Trash2 className="w-3.5 h-3.5 mr-1" /> Deletar Pedido
+                          </Button>
                         </div>
                       </div>
                     )}

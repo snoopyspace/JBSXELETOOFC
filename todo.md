@@ -58,3 +58,10 @@
 - [x] Testar todas as funcionalidades e corrigir erros encontrados
 - [x] Verificar e salvar tag Google Ads (AW-18006443138) no index.html para publicação
 - [x] Corrigir responsividade dos cards de produto no celular/tablet - informações cortadas
+- [x] Visual PC igual ao mobile: cards compactos com botão "Detalhes" que leva à página de produto (sem descrição no card)
+- [x] Corrigir botão "Fazer Pedido" no ProductDetail que não redireciona para o formulário de checkout
+- [x] Adicionar campo de imagem do produto entre produtos e Calculadora de Frete no checkout
+- [x] Trocar login do painel admin de usuário/senha para login via Manus OAuth
+- [x] Registrar todos os pedidos enviados por WhatsApp no painel admin com dados completos
+- [x] Adicionar opções de deletar e aprovar pedidos no painel admin
+- [x] Atualizar curva ABC com base nos pedidos registrados/aprovados

@@ -281,6 +281,11 @@ export const appRouter = router({
         const { id, ...data } = input;
         return await db.updateOrder(id, data);
       }),
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteOrder(input.id);
+      }),
   }),
 
   // Shipping Configuration

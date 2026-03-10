@@ -220,7 +220,31 @@ export default function ProductDetail() {
             {/* CTA */}
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Button
-                onClick={() => setLocation("/checkout")}
+                onClick={() => {
+                  // Add product to cart in sessionStorage and redirect to checkout
+                  const cartItem = {
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    image: product.image,
+                    quantity: 1,
+                  };
+                  const existingCart = sessionStorage.getItem("jbsx_cart");
+                  let cart = [];
+                  if (existingCart) {
+                    try {
+                      cart = JSON.parse(existingCart);
+                    } catch { cart = []; }
+                  }
+                  const existingIndex = cart.findIndex((item: any) => item.id === product.id);
+                  if (existingIndex >= 0) {
+                    cart[existingIndex].quantity += 1;
+                  } else {
+                    cart.push(cartItem);
+                  }
+                  sessionStorage.setItem("jbsx_cart", JSON.stringify(cart));
+                  setLocation("/checkout");
+                }}
                 className="flex-1 bg-gradient-to-r from-cyan-500 to-pink-500 text-white font-bold py-6 text-lg rounded-xl hover:opacity-90 transition-opacity"
                 disabled={product.stock === 0}
               >

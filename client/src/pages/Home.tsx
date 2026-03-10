@@ -509,51 +509,46 @@ Aguardo retorno!
                     </div>
 
                     {/* Product Info */}
-                    <div className="p-2 sm:p-4 flex flex-col flex-1">
+                    <div className="p-3 flex flex-col flex-1">
                       <h3
-                        className="font-semibold text-white line-clamp-2 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base cursor-pointer hover:text-cyan-400 transition-colors"
+                        className="font-semibold text-white line-clamp-2 mb-2 text-xs sm:text-sm cursor-pointer hover:text-cyan-400 transition-colors"
                         onClick={() => setLocation(`/product/${product.id}`)}
                       >
                         {product.name}
                       </h3>
-                      {product.description && (
-                        <p className="text-xs sm:text-sm text-slate-400 line-clamp-1 sm:line-clamp-2 mb-2 sm:mb-3 hidden sm:block">
-                          {product.description}
-                        </p>
-                      )}
 
                       {/* Price and Stock */}
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-3 mt-auto gap-1 sm:gap-2">
-                        <span className="text-sm sm:text-base md:text-lg font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
+                      <div className="flex flex-col mb-2 mt-auto gap-1">
+                        <span className="text-sm sm:text-base font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
                           R$ {parseFloat(product.price).toFixed(2)}
                         </span>
                         {product.stock > 0 ? (
-                          <Badge className="bg-gradient-to-r from-green-500 to-green-400 text-slate-900 border-0 text-[10px] sm:text-xs md:text-sm w-fit">
+                          <Badge className="bg-gradient-to-r from-green-500 to-green-400 text-slate-900 border-0 text-[10px] sm:text-xs w-fit">
                             Estoque
                           </Badge>
                         ) : (
-                          <Badge className="bg-gradient-to-r from-red-500 to-red-400 text-white border-0 text-[10px] sm:text-xs md:text-sm w-fit">
+                          <Badge className="bg-gradient-to-r from-red-500 to-red-400 text-white border-0 text-[10px] sm:text-xs w-fit">
                             Esgotado
                           </Badge>
                         )}
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-2">
+                      <div className="flex flex-col gap-1.5">
                         <Button
                           onClick={() => setLocation(`/product/${product.id}`)}
                           variant="outline"
-                          className="flex-1 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 font-semibold text-[10px] sm:text-xs md:text-sm h-8 sm:h-9 md:h-10 px-2 sm:px-3"
+                          className="w-full border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 font-semibold text-xs h-9 px-2"
                         >
-                          <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1 shrink-0" />
+                          <Eye className="w-3.5 h-3.5 mr-1 shrink-0" />
                           Detalhes
                         </Button>
                         <Button
                           onClick={() => handleAddToCart(product)}
                           disabled={product.stock === 0}
-                          className="flex-1 bg-gradient-to-r from-cyan-500 to-cyan-400 hover:shadow-lg hover:shadow-cyan-500/50 text-slate-900 font-semibold text-[10px] sm:text-xs md:text-sm h-8 sm:h-9 md:h-10 px-2 sm:px-3"
+                          className="w-full bg-gradient-to-r from-cyan-500 to-cyan-400 hover:shadow-lg hover:shadow-cyan-500/50 text-slate-900 font-semibold text-xs h-9 px-2"
                         >
-                          <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 mr-1 shrink-0" />
+                          <ShoppingCart className="w-3.5 h-3.5 mr-1 shrink-0" />
                           Comprar
                         </Button>
                       </div>

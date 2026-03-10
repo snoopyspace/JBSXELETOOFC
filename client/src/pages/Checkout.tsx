@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Package } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 import OrderForm from "@/components/OrderForm";
 
 interface CartItem {
@@ -11,12 +12,15 @@ interface CartItem {
   name: string;
   price: string;
   quantity: number;
+  image?: string | null;
 }
 
 export default function Checkout() {
   const [, setLocation] = useLocation();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const createOrderMutation = trpc.orders.create.useMutation();
 
   useEffect(() => {
     // Get cart from sessionStorage
@@ -32,7 +36,7 @@ export default function Checkout() {
     setIsLoading(false);
   }, []);
 
-  const handleOrderSubmit = (orderData: any) => {
+  const handleOrderSubmit = async (orderData: any) => {
     // Format cart items for WhatsApp
     const cartText = orderData.cart
       .map((item: CartItem) => `• ${item.name} (x${item.quantity}) - R$ ${(parseFloat(item.price) * item.quantity).toFixed(2)}`)
@@ -94,6 +98,30 @@ ${paymentText}${installmentDetails}
     const encodedMessage = encodeURIComponent(message);
     // Using the new number: +55 85 91751934
     const whatsappUrl = `https://wa.me/558591751934?text=${encodedMessage}`;
+
+    // Save order to database first
+    try {
+      await createOrderMutation.mutateAsync({
+        customerName: orderData.name,
+        customerEmail: orderData.email || "nao@informado.com",
+        customerPhone: orderData.phone,
+        customerAddress: `${orderData.address}${orderData.complement ? `, ${orderData.complement}` : ""}, ${orderData.city || ""} - ${orderData.state || ""}, CEP: ${orderData.cep}`,
+        items: orderData.cart.map((item: CartItem) => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        subtotal: orderData.cartSubtotal.toFixed(2),
+        shippingCost: (orderData.shippingCost || 0).toFixed(2),
+        paymentFee: orderData.feeAmount.toFixed(2),
+        total: orderData.total.toFixed(2),
+        termsAccepted: orderData.termsAccepted,
+      });
+    } catch (error) {
+      console.error("Erro ao salvar pedido:", error);
+      // Continue even if save fails - WhatsApp is the primary channel
+    }
 
     // Open WhatsApp
     window.open(whatsappUrl, "_blank");
@@ -167,13 +195,25 @@ ${paymentText}${installmentDetails}
                 <CardTitle className="text-cyan-400">Resumo do Pedido</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-3 max-h-64 overflow-y-auto">
+                <div className="space-y-3 max-h-80 overflow-y-auto">
                   {cart.map((item) => (
-                    <div key={item.id} className="flex justify-between text-sm border-b border-slate-700 pb-2">
-                      <span className="text-slate-300">
-                        {item.name} (x{item.quantity})
-                      </span>
-                      <span className="font-semibold text-cyan-400">
+                    <div key={item.id} className="flex items-center gap-3 text-sm border-b border-slate-700 pb-3">
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-14 h-14 rounded-lg object-cover border border-cyan-500/20 flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 rounded-lg bg-slate-700 flex items-center justify-center flex-shrink-0 border border-cyan-500/20">
+                          <Package className="w-5 h-5 text-slate-500" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-slate-300 truncate">{item.name}</p>
+                        <p className="text-slate-500 text-xs">Qtd: {item.quantity}</p>
+                      </div>
+                      <span className="font-semibold text-cyan-400 flex-shrink-0">
                         R$ {(parseFloat(item.price) * item.quantity).toFixed(2)}
                       </span>
                     </div>

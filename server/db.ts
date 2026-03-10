@@ -198,6 +198,12 @@ export async function updateOrder(id: number, order: Partial<InsertOrder>) {
   return db.update(orders).set(order).where(eq(orders.id, id));
 }
 
+export async function deleteOrder(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.delete(orders).where(eq(orders.id, id));
+}
+
 // ===================== Shipping configuration =====================
 
 export async function getShippingConfig() {
