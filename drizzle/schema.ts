@@ -95,3 +95,36 @@ export const paymentFeeConfig = mysqlTable("paymentFeeConfig", {
 
 export type PaymentFeeConfig = typeof paymentFeeConfig.$inferSelect;
 export type InsertPaymentFeeConfig = typeof paymentFeeConfig.$inferInsert;
+
+// Reviews table
+export const reviews = mysqlTable("reviews", {
+  id: int("id").autoincrement().primaryKey(),
+  productId: int("productId").notNull(),
+  customerName: varchar("customerName", { length: 255 }).notNull(),
+  rating: int("rating").notNull(),
+  comment: text("comment"),
+  status: mysqlEnum("status", ["pending", "approved", "hidden"]).default("pending").notNull(),
+  adminResponse: text("adminResponse"),
+  adminResponseAt: timestamp("adminResponseAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Review = typeof reviews.$inferSelect;
+export type InsertReview = typeof reviews.$inferInsert;
+
+// Questions table
+export const questions = mysqlTable("questions", {
+  id: int("id").autoincrement().primaryKey(),
+  productId: int("productId").notNull(),
+  customerName: varchar("customerName", { length: 255 }).notNull(),
+  question: text("question").notNull(),
+  status: mysqlEnum("status", ["pending", "answered"]).default("pending").notNull(),
+  adminResponse: text("adminResponse"),
+  adminResponseAt: timestamp("adminResponseAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Question = typeof questions.$inferSelect;
+export type InsertQuestion = typeof questions.$inferInsert;

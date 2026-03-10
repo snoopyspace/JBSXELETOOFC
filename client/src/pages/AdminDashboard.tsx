@@ -13,9 +13,10 @@ import {
   Plus, Trash2, Edit2, Package, ShoppingCart, Settings, FolderTree,
   BarChart3, Menu, X, ArrowLeft, Upload, Video, Image as ImageIcon,
   Eye, ChevronDown, ChevronUp, Search, Home, TrendingUp,
+  Star, MessageSquare, CheckCircle, XCircle, Clock, Send, HelpCircle,
 } from "lucide-react";
 
-type Tab = "dashboard" | "categories" | "products" | "orders" | "abc" | "settings";
+type Tab = "dashboard" | "categories" | "products" | "orders" | "abc" | "reviews" | "settings";
 
 // Status labels in Portuguese
 const statusLabels: Record<string, string> = {
@@ -67,6 +68,8 @@ export default function AdminDashboard() {
   const { data: orders, refetch: refetchOrders } = trpc.orders.list.useQuery();
   const { data: shippingConfig } = trpc.shippingConfig.get.useQuery();
   const { data: paymentFeeConfig } = trpc.paymentFeeConfig.get.useQuery();
+  const { data: allReviews, refetch: refetchReviews } = trpc.reviews.all.useQuery();
+  const { data: allQuestions, refetch: refetchQuestions } = trpc.questions.all.useQuery();
 
   // Mutations
   const createProductMutation = trpc.products.create.useMutation({
@@ -106,6 +109,34 @@ export default function AdminDashboard() {
     onSuccess: () => toast.success("Taxa atualizada!"),
     onError: (e) => toast.error(e.message),
   });
+  const updateReviewStatusMutation = trpc.reviews.updateStatus.useMutation({
+    onSuccess: () => { toast.success("Status atualizado!"); refetchReviews(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const respondReviewMutation = trpc.reviews.respond.useMutation({
+    onSuccess: () => { toast.success("Resposta enviada!"); refetchReviews(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteReviewMutation = trpc.reviews.delete.useMutation({
+    onSuccess: () => { toast.success("Avaliação excluída!"); refetchReviews(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const respondQuestionMutation = trpc.questions.respond.useMutation({
+    onSuccess: () => { toast.success("Resposta enviada!"); refetchQuestions(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteQuestionMutation = trpc.questions.delete.useMutation({
+    onSuccess: () => { toast.success("Pergunta excluída!"); refetchQuestions(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  // Review/Question response state
+  const [reviewResponseId, setReviewResponseId] = useState<number | null>(null);
+  const [reviewResponseText, setReviewResponseText] = useState("");
+  const [questionResponseId, setQuestionResponseId] = useState<number | null>(null);
+  const [questionResponseText, setQuestionResponseText] = useState("");
+  const [reviewFilter, setReviewFilter] = useState<"all" | "pending" | "approved" | "hidden">("all");
+  const [questionFilter, setQuestionFilter] = useState<"all" | "pending" | "answered">("all");
 
   const resetProductForm = () => {
     setProductForm({ name: "", description: "", price: "", stock: "0", weight: "0", image: "", videoUrl: "", categoryId: 0, gallery: [] });
@@ -211,6 +242,7 @@ export default function AdminDashboard() {
     { id: "products" as Tab, label: "Produtos", icon: Package },
     { id: "orders" as Tab, label: "Pedidos", icon: ShoppingCart },
     { id: "abc" as Tab, label: "Curva ABC", icon: BarChart3 },
+    { id: "reviews" as Tab, label: "Avaliações", icon: Star },
     { id: "settings" as Tab, label: "Config", icon: Settings },
   ];
 
@@ -830,6 +862,163 @@ export default function AdminDashboard() {
         )}
 
         {/* ===== SETTINGS ===== */}
+        {activeTab === "reviews" && (
+          <div className="space-y-6">
+            {/* Reviews Management */}
+            <Card className="bg-slate-800/80 border-cyan-500/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Star className="w-5 h-5 text-yellow-400" />
+                  Gerenciar Avaliações ({allReviews?.length || 0})
+                </CardTitle>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {(["all", "pending", "approved", "hidden"] as const).map((f) => (
+                    <button key={f} onClick={() => setReviewFilter(f)}
+                      className={`px-3 py-1 text-xs rounded-lg border transition-colors ${
+                        reviewFilter === f ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-400" : "bg-slate-700 border-slate-600 text-slate-400"
+                      }`}>
+                      {f === "all" ? "Todas" : f === "pending" ? "Pendentes" : f === "approved" ? "Aprovadas" : "Ocultas"}
+                    </button>
+                  ))}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {allReviews?.filter((r) => reviewFilter === "all" || r.status === reviewFilter).length === 0 ? (
+                  <p className="text-slate-500 text-center py-4">Nenhuma avaliação encontrada</p>
+                ) : (
+                  allReviews?.filter((r) => reviewFilter === "all" || r.status === reviewFilter).map((review) => {
+                    const product = products?.find((p) => p.id === review.productId);
+                    return (
+                      <div key={review.id} className="bg-slate-700/50 rounded-lg p-4 border border-slate-600/50 space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className="flex gap-0.5">
+                              {[1,2,3,4,5].map((s) => (
+                                <Star key={s} className={`w-4 h-4 ${s <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-slate-600"}`} />
+                              ))}
+                            </div>
+                            <span className="text-white font-medium text-sm">{review.customerName}</span>
+                            <Badge className={review.status === "approved" ? "bg-green-500/20 text-green-400 border-green-500/30 text-xs" : review.status === "hidden" ? "bg-red-500/20 text-red-400 border-red-500/30 text-xs" : "bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs"}>
+                              {review.status === "approved" ? "Aprovada" : review.status === "hidden" ? "Oculta" : "Pendente"}
+                            </Badge>
+                          </div>
+                          <span className="text-xs text-slate-500">{new Date(review.createdAt).toLocaleDateString("pt-BR")}</span>
+                        </div>
+                        {product && <p className="text-xs text-cyan-400">Produto: {product.name}</p>}
+                        {review.comment && <p className="text-slate-300 text-sm">{review.comment}</p>}
+                        {review.adminResponse && (
+                          <div className="ml-4 pl-3 border-l-2 border-cyan-500/30">
+                            <p className="text-xs text-cyan-400 font-semibold">Sua resposta:</p>
+                            <p className="text-slate-300 text-sm">{review.adminResponse}</p>
+                          </div>
+                        )}
+                        {reviewResponseId === review.id && (
+                          <div className="flex gap-2">
+                            <Input value={reviewResponseText} onChange={(e) => setReviewResponseText(e.target.value)} placeholder="Escreva sua resposta..." className="bg-slate-600 border-slate-500 text-white text-sm" />
+                            <Button size="sm" onClick={() => { respondReviewMutation.mutate({ id: review.id, adminResponse: reviewResponseText }); setReviewResponseId(null); setReviewResponseText(""); }} disabled={!reviewResponseText.trim()} className="bg-cyan-500 text-slate-900">
+                              <Send className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
+                        <div className="flex flex-wrap gap-2">
+                          {review.status !== "approved" && (
+                            <Button size="sm" variant="outline" onClick={() => updateReviewStatusMutation.mutate({ id: review.id, status: "approved" })} className="text-green-400 border-green-500/30 hover:bg-green-500/10 text-xs">
+                              <CheckCircle className="w-3 h-3 mr-1" /> Aprovar
+                            </Button>
+                          )}
+                          {review.status !== "hidden" && (
+                            <Button size="sm" variant="outline" onClick={() => updateReviewStatusMutation.mutate({ id: review.id, status: "hidden" })} className="text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/10 text-xs">
+                              <XCircle className="w-3 h-3 mr-1" /> Ocultar
+                            </Button>
+                          )}
+                          <Button size="sm" variant="outline" onClick={() => { setReviewResponseId(review.id === reviewResponseId ? null : review.id); setReviewResponseText(review.adminResponse || ""); }} className="text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/10 text-xs">
+                            <MessageSquare className="w-3 h-3 mr-1" /> Responder
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => { if (confirm("Excluir esta avaliação?")) deleteReviewMutation.mutate({ id: review.id }); }} className="text-red-400 border-red-500/30 hover:bg-red-500/10 text-xs">
+                            <Trash2 className="w-3 h-3 mr-1" /> Excluir
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Questions Management */}
+            <Card className="bg-slate-800/80 border-pink-500/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <HelpCircle className="w-5 h-5 text-pink-400" />
+                  Gerenciar Perguntas ({allQuestions?.length || 0})
+                </CardTitle>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {(["all", "pending", "answered"] as const).map((f) => (
+                    <button key={f} onClick={() => setQuestionFilter(f)}
+                      className={`px-3 py-1 text-xs rounded-lg border transition-colors ${
+                        questionFilter === f ? "bg-pink-500/20 border-pink-500/50 text-pink-400" : "bg-slate-700 border-slate-600 text-slate-400"
+                      }`}>
+                      {f === "all" ? "Todas" : f === "pending" ? "Pendentes" : "Respondidas"}
+                    </button>
+                  ))}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {allQuestions?.filter((q) => questionFilter === "all" || q.status === questionFilter).length === 0 ? (
+                  <p className="text-slate-500 text-center py-4">Nenhuma pergunta encontrada</p>
+                ) : (
+                  allQuestions?.filter((q) => questionFilter === "all" || q.status === questionFilter).map((q) => {
+                    const product = products?.find((p) => p.id === q.productId);
+                    return (
+                      <div key={q.id} className="bg-slate-700/50 rounded-lg p-4 border border-slate-600/50 space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-white font-medium text-sm">{q.customerName}</span>
+                            {q.status === "answered" ? (
+                              <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
+                                <CheckCircle className="w-3 h-3 mr-1" /> Respondida
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">
+                                <Clock className="w-3 h-3 mr-1" /> Pendente
+                              </Badge>
+                            )}
+                          </div>
+                          <span className="text-xs text-slate-500">{new Date(q.createdAt).toLocaleDateString("pt-BR")}</span>
+                        </div>
+                        {product && <p className="text-xs text-pink-400">Produto: {product.name}</p>}
+                        <p className="text-slate-300 text-sm">{q.question}</p>
+                        {q.adminResponse && (
+                          <div className="ml-4 pl-3 border-l-2 border-pink-500/30">
+                            <p className="text-xs text-pink-400 font-semibold">Sua resposta:</p>
+                            <p className="text-slate-300 text-sm">{q.adminResponse}</p>
+                          </div>
+                        )}
+                        {questionResponseId === q.id && (
+                          <div className="flex gap-2">
+                            <Input value={questionResponseText} onChange={(e) => setQuestionResponseText(e.target.value)} placeholder="Escreva sua resposta..." className="bg-slate-600 border-slate-500 text-white text-sm" />
+                            <Button size="sm" onClick={() => { respondQuestionMutation.mutate({ id: q.id, adminResponse: questionResponseText }); setQuestionResponseId(null); setQuestionResponseText(""); }} disabled={!questionResponseText.trim()} className="bg-pink-500 text-white">
+                              <Send className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
+                        <div className="flex flex-wrap gap-2">
+                          <Button size="sm" variant="outline" onClick={() => { setQuestionResponseId(q.id === questionResponseId ? null : q.id); setQuestionResponseText(q.adminResponse || ""); }} className="text-pink-400 border-pink-500/30 hover:bg-pink-500/10 text-xs">
+                            <MessageSquare className="w-3 h-3 mr-1" /> Responder
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => { if (confirm("Excluir esta pergunta?")) deleteQuestionMutation.mutate({ id: q.id }); }} className="text-red-400 border-red-500/30 hover:bg-red-500/10 text-xs">
+                            <Trash2 className="w-3 h-3 mr-1" /> Excluir
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {activeTab === "settings" && (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold text-white">Configurações</h2>

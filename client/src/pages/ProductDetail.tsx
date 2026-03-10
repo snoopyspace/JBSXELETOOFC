@@ -7,6 +7,8 @@ import {
   ArrowLeft, ShoppingCart, ChevronLeft, ChevronRight, Play, Package,
   Truck, Shield, Share2, Heart,
 } from "lucide-react";
+import ProductReviews from "@/components/ProductReviews";
+import ProductQuestions from "@/components/ProductQuestions";
 
 export default function ProductDetail() {
   const [, params] = useRoute("/product/:id");
@@ -239,6 +241,16 @@ export default function ProductDetail() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mt-12 border-t border-slate-700/50 pt-8">
+          <ProductReviews productId={productId} />
+        </div>
+
+        {/* Questions Section */}
+        <div className="mt-12 border-t border-slate-700/50 pt-8">
+          <ProductQuestions productId={productId} />
         </div>
 
         {/* Related Products */}

@@ -1,4 +1,4 @@
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser, users,
@@ -7,6 +7,8 @@ import {
   orders, InsertOrder, Order,
   shippingConfig, InsertShippingConfig, ShippingConfig,
   paymentFeeConfig, InsertPaymentFeeConfig, PaymentFeeConfig,
+  reviews, InsertReview, Review,
+  questions, InsertQuestion, Question,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -233,4 +235,95 @@ export async function updatePaymentFeeConfig(config: Partial<InsertPaymentFeeCon
   } else {
     return db.insert(paymentFeeConfig).values(config as InsertPaymentFeeConfig);
   }
+}
+
+// ===================== Review queries =====================
+
+export async function getReviewsByProduct(productId: number, status?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  if (status) {
+    return db.select().from(reviews)
+      .where(and(eq(reviews.productId, productId), eq(reviews.status, status as any)))
+      .orderBy(desc(reviews.createdAt));
+  }
+  return db.select().from(reviews)
+    .where(eq(reviews.productId, productId))
+    .orderBy(desc(reviews.createdAt));
+}
+
+export async function getAllReviews() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(reviews).orderBy(desc(reviews.createdAt));
+}
+
+export async function createReview(review: { productId: number; customerName: string; rating: number; comment: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(reviews).values(review);
+}
+
+export async function updateReviewStatus(id: number, status: "pending" | "approved" | "hidden") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(reviews).set({ status }).where(eq(reviews.id, id));
+}
+
+export async function respondToReview(id: number, adminResponse: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(reviews).set({ adminResponse, adminResponseAt: new Date() }).where(eq(reviews.id, id));
+}
+
+export async function deleteReview(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.delete(reviews).where(eq(reviews.id, id));
+}
+
+export async function getReviewStats(productId: number) {
+  const db = await getDb();
+  if (!db) return { average: 0, total: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
+  const approvedReviews = await db.select().from(reviews)
+    .where(and(eq(reviews.productId, productId), eq(reviews.status, "approved")));
+  const total = approvedReviews.length;
+  const average = total > 0 ? approvedReviews.reduce((sum, r) => sum + r.rating, 0) / total : 0;
+  const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  approvedReviews.forEach(r => { distribution[r.rating as keyof typeof distribution]++; });
+  return { average: Math.round(average * 10) / 10, total, distribution };
+}
+
+// ===================== Question queries =====================
+
+export async function getQuestionsByProduct(productId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(questions)
+    .where(eq(questions.productId, productId))
+    .orderBy(desc(questions.createdAt));
+}
+
+export async function getAllQuestions() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(questions).orderBy(desc(questions.createdAt));
+}
+
+export async function createQuestion(question: { productId: number; customerName: string; question: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(questions).values(question);
+}
+
+export async function respondToQuestion(id: number, adminResponse: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(questions).set({ adminResponse, adminResponseAt: new Date(), status: "answered" }).where(eq(questions.id, id));
+}
+
+export async function deleteQuestion(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.delete(questions).where(eq(questions.id, id));
 }

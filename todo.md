@@ -34,3 +34,14 @@
 - [x] Admin: curva ABC de produtos
 - [x] Criar página individual de produto (/product/:id) com descrição, fotos e vídeos
 - [x] Garantir compatibilidade mobile em todas as novas telas
+- [x] Criar tabelas reviews e questions no banco de dados
+- [x] Atualizar schema Drizzle com reviews (estrelas, nome, comentário, status, resposta admin)
+- [x] Atualizar schema Drizzle com questions (pergunta, nome, resposta admin, status)
+- [x] Criar rotas tRPC para CRUD de avaliações (criar, listar, aprovar, ocultar, excluir, responder)
+- [x] Criar rotas tRPC para CRUD de perguntas (criar, listar, responder, excluir)
+- [x] Criar componente de avaliações na página de produto (estrelas, filtros, ordenação)
+- [x] Criar componente de perguntas e respostas na página de produto
+- [x] Exibir média de avaliações e resumo por estrelas
+- [x] Adicionar seção de gerenciamento de avaliações e perguntas no painel Admin
+- [x] Proteção contra spam e envios duplicados
+- [x] Layout responsivo (desktop, tablet, celular) com identidade JBSX Eletro

@@ -237,6 +237,93 @@ export const appRouter = router({
       }),
   }),
 
+  // Reviews
+  reviews: router({
+    byProduct: publicProcedure
+      .input(z.object({ productId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getReviewsByProduct(input.productId, "approved");
+      }),
+    allByProduct: publicProcedure
+      .input(z.object({ productId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getReviewsByProduct(input.productId);
+      }),
+    all: publicProcedure.query(async () => {
+      return await db.getAllReviews();
+    }),
+    stats: publicProcedure
+      .input(z.object({ productId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getReviewStats(input.productId);
+      }),
+    create: publicProcedure
+      .input(z.object({
+        productId: z.number(),
+        customerName: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+        rating: z.number().min(1).max(5),
+        comment: z.string().min(5, "Comentário deve ter pelo menos 5 caracteres").optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.createReview({
+          productId: input.productId,
+          customerName: input.customerName,
+          rating: input.rating,
+          comment: input.comment || null,
+        });
+      }),
+    updateStatus: publicProcedure
+      .input(z.object({ id: z.number(), status: z.enum(["pending", "approved", "hidden"]) }))
+      .mutation(async ({ input }) => {
+        return await db.updateReviewStatus(input.id, input.status);
+      }),
+    respond: publicProcedure
+      .input(z.object({ id: z.number(), adminResponse: z.string().min(1) }))
+      .mutation(async ({ input }) => {
+        return await db.respondToReview(input.id, input.adminResponse);
+      }),
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteReview(input.id);
+      }),
+  }),
+
+  // Questions
+  questions: router({
+    byProduct: publicProcedure
+      .input(z.object({ productId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getQuestionsByProduct(input.productId);
+      }),
+    all: publicProcedure.query(async () => {
+      return await db.getAllQuestions();
+    }),
+    create: publicProcedure
+      .input(z.object({
+        productId: z.number(),
+        customerName: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+        question: z.string().min(5, "Pergunta deve ter pelo menos 5 caracteres"),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.createQuestion({
+          productId: input.productId,
+          customerName: input.customerName,
+          question: input.question,
+        });
+      }),
+    respond: publicProcedure
+      .input(z.object({ id: z.number(), adminResponse: z.string().min(1) }))
+      .mutation(async ({ input }) => {
+        return await db.respondToQuestion(input.id, input.adminResponse);
+      }),
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteQuestion(input.id);
+      }),
+  }),
+
   // Payment Fee Configuration
   paymentFeeConfig: router({
     get: publicProcedure.query(async () => {
