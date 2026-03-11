@@ -572,20 +572,57 @@ Aguardo retorno!
 
             {/* Produto Não Encontrado - Solicitar Cotação */}
             <div className="mt-12 mb-12">
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-cyan-500/20">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Search className="w-6 h-6 text-pink-400" />
-                    <h3 className="text-xl font-bold text-pink-400">Não encontrou o produto que procurava?</h3>
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-cyan-500/20 overflow-hidden relative">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <Search className="w-24 h-24 text-cyan-400" />
+                </div>
+                <CardContent className="p-8 relative z-10">
+                  <div className="flex flex-col gap-2 mb-6">
+                    <h3 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
+                      Encomenda Internacional Premium
+                    </h3>
+                    <p className="text-lg font-semibold text-slate-200">
+                      Traga o melhor da tecnologia global para suas mãos.
+                    </p>
                   </div>
-                  <p className="text-slate-300 mb-6">
-                    Solicite uma cotação! Preencha o formulário abaixo com os dados do produto que você está procurando e nossa equipe entrará em contato.
+                  
+                  <p className="text-slate-300 mb-8 max-w-2xl leading-relaxed">
+                    Importação sob encomenda de produtos dos EUA, China e Paraguai. 
+                    Nossa equipe cuida de todo o processo para garantir que você receba 
+                    tecnologia de ponta com total segurança e procedência.
                   </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    {[
+                      "Produtos originais e verificados",
+                      "Importação sob encomenda",
+                      "Cotação rápida da equipe",
+                      "Entrega segura"
+                    ].map((benefit, i) => (
+                      <div key={i} className="flex items-center gap-2 text-slate-200">
+                        <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                        <span className="text-sm font-medium">{benefit}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap gap-6 mb-8 py-4 border-y border-cyan-500/10">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      🇺🇸 Estados Unidos
+                    </span>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      🇨🇳 China
+                    </span>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      🇵🇾 Paraguai
+                    </span>
+                  </div>
+
                   <Button
                     onClick={() => setShowQuotationForm(!showQuotationForm)}
-                    className="bg-gradient-to-r from-pink-500 to-pink-400 hover:shadow-lg hover:shadow-pink-500/50 text-slate-900 font-semibold"
+                    className="bg-gradient-to-r from-cyan-500 to-pink-500 hover:shadow-lg hover:shadow-cyan-500/50 text-white font-bold px-8 py-6 text-lg"
                   >
-                    {showQuotationForm ? "Cancelar" : "Solicitar Cotação"}
+                    {showQuotationForm ? "Fechar Formulário" : "Solicitar Cotação de Importação"}
                   </Button>
 
                   {/* Formulário de Cotação */}
@@ -820,8 +857,8 @@ Aguardo retorno!
               <h3 className="text-lg font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent mb-3">
                 JBSX Eletro
               </h3>
-              <p className="text-slate-400 text-sm">
-                Eletrônicos e Importados de Qualidade. Sua loja de confiança para produtos premium.
+              <p className="text-slate-400 text-sm leading-relaxed">
+                Loja especializada em eletrônicos premium e produtos importados das melhores marcas do mundo, como DJI, Apple, Xiaomi, consoles e tecnologia de última geração.
               </p>
             </div>
 
@@ -840,7 +877,12 @@ Aguardo retorno!
                     (85) 99175-1934
                   </a>
                 </p>
-                <p>Atendimento de segunda a sexta</p>
+                <p>Segunda a sexta das 09h às 17h</p>
+                <p className="mt-2">
+                  Rua Ricardo Castro Macedo, 1907<br />
+                  Loja 211 - Luciano Cavalcante<br />
+                  Fortaleza / CE - CEP 60813-680
+                </p>
               </div>
             </div>
 
