@@ -585,7 +585,7 @@ Aguardo retorno!
                     onClick={() => setShowQuotationForm(!showQuotationForm)}
                     className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 to-pink-500 hover:shadow-lg hover:shadow-cyan-500/50 text-white font-bold px-6 py-4 sm:px-8 sm:py-6 text-base sm:text-lg"
                   >
-                    {showQuotationForm ? "Fechar Formulário" : "Solicitar Cotação de Importação"}
+                    {showQuotationForm ? "Fechar Formulário" : "Solicitar Cotação de Importação Legal"}
                   </Button>
 
                   {/* Formulário de Cotação */}
