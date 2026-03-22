@@ -552,15 +552,13 @@ Aguardo retorno!
                   </div>
                   
                   <p className="text-sm sm:text-base text-slate-300 mb-6 leading-relaxed">
-                    Importação sob encomenda de produtos dos EUA, China e Paraguai. 
-                    Nossa equipe cuida de todo o processo para garantir que você receba 
-                    tecnologia de ponta com total segurança e procedência.
+                    Importação legal sob encomenda, com fornecedores verificados, procedência conferida e suporte no Brasil.
                   </p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
                     {[
                       "Produtos originais e verificados",
-                      "Importação sob encomenda",
+                      "Importação legal sob encomenda",
                       "Cotação rápida da equipe",
                       "Entrega segura"
                     ].map((benefit, i) => (
