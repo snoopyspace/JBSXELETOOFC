@@ -541,23 +541,23 @@ Aguardo retorno!
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                   <Search className="w-24 h-24 text-cyan-400" />
                 </div>
-                <CardContent className="p-8 relative z-10">
-                  <div className="flex flex-col gap-2 mb-6">
-                    <h3 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
+                <CardContent className="p-4 sm:p-8 relative z-10">
+                  <div className="flex flex-col gap-2 mb-5">
+                    <h3 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent leading-tight">
                       Encomenda Internacional Premium
                     </h3>
-                    <p className="text-lg font-semibold text-slate-200">
+                    <p className="text-base sm:text-lg font-semibold text-slate-200">
                       Traga o melhor da tecnologia global para suas mãos.
                     </p>
                   </div>
                   
-                  <p className="text-slate-300 mb-8 max-w-2xl leading-relaxed">
+                  <p className="text-sm sm:text-base text-slate-300 mb-6 leading-relaxed">
                     Importação sob encomenda de produtos dos EUA, China e Paraguai. 
                     Nossa equipe cuida de todo o processo para garantir que você receba 
                     tecnologia de ponta com total segurança e procedência.
                   </p>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
                     {[
                       "Produtos originais e verificados",
                       "Importação sob encomenda",
@@ -565,34 +565,34 @@ Aguardo retorno!
                       "Entrega segura"
                     ].map((benefit, i) => (
                       <div key={i} className="flex items-center gap-2 text-slate-200">
-                        <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                        <div className="w-2 h-2 rounded-full bg-cyan-400 flex-shrink-0" />
                         <span className="text-sm font-medium">{benefit}</span>
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex flex-wrap gap-6 mb-8 py-4 border-y border-cyan-500/10">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <div className="flex flex-wrap gap-3 sm:gap-6 mb-6 py-4 border-y border-cyan-500/10">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
                       🇺🇸 Estados Unidos
                     </span>
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
                       🇨🇳 China
                     </span>
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
                       🇵🇾 Paraguai
                     </span>
                   </div>
 
                   <Button
                     onClick={() => setShowQuotationForm(!showQuotationForm)}
-                    className="bg-gradient-to-r from-cyan-500 to-pink-500 hover:shadow-lg hover:shadow-cyan-500/50 text-white font-bold px-8 py-6 text-lg"
+                    className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 to-pink-500 hover:shadow-lg hover:shadow-cyan-500/50 text-white font-bold px-6 py-4 sm:px-8 sm:py-6 text-base sm:text-lg"
                   >
                     {showQuotationForm ? "Fechar Formulário" : "Solicitar Cotação de Importação"}
                   </Button>
 
                   {/* Formulário de Cotação */}
                   {showQuotationForm && (
-                    <div className="mt-6 p-6 bg-slate-700/50 rounded-lg border border-pink-500/20 space-y-4">
+                    <div className="mt-6 p-4 sm:p-6 bg-slate-700/50 rounded-lg border border-pink-500/20 space-y-4">
                       <div>
                         <label className="block text-sm font-semibold text-slate-300 mb-2">Nome *</label>
                         <Input

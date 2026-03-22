@@ -95,3 +95,4 @@
 - [x] Implementar validação completa de CPF brasileiro no checkout (dígitos verificadores)
 - [x] Ajustar resumo financeiro no checkout: mostrar parcelas, valor/parcela, taxa e total
 - [x] Atualizar texto do checkbox de termos para incluir Política de Envio
+- [x] Corrigir layout mobile da seção "Encomenda Internacional Premium" (conteúdo cortado no celular)
