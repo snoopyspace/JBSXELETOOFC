@@ -1014,7 +1014,7 @@ Aguardo retorno!
           {/* CNPJ e Copyright */}
           <div className="text-center space-y-2">
             <p className="text-slate-500 text-xs">
-              JBSX Eletro &mdash; CNPJ: 12.345.678/0001-99 &mdash; Rua Ricardo Castro Macedo, 1907, Loja 211, Luciano Cavalcante, Fortaleza/CE
+              JBSX Eletro &mdash; CNPJ: 64.760.199/0001-39 &mdash; Rua Ricardo Castro Macedo, 1907, Loja 211, Luciano Cavalcante, Fortaleza/CE
             </p>
             <p className="text-slate-500 text-xs">
               &copy; {new Date().getFullYear()} JBSX Eletro. Todos os direitos reservados.
