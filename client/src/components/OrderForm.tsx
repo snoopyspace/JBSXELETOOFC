@@ -561,44 +561,63 @@ export default function OrderForm({ cart, onSubmit }: OrderFormProps) {
                 </>
               )}
 
-              {/* Fee Summary - DETALHADO */}
-              <div className="p-4 bg-gradient-to-r from-cyan-500/10 to-pink-500/10 border border-cyan-500/30 rounded-xl">
-                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-3">Resumo Financeiro</p>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between text-slate-300">
-                    <span>Subtotal:</span>
-                    <span className="font-medium">{formatBRL(cartSubtotal)}</span>
+              {/* Fee Summary - ESTILO AMAZON */}
+              <div className="rounded-xl border border-slate-600/50 bg-slate-800/60 overflow-hidden">
+                <div className="px-4 py-3 space-y-2 text-sm">
+                  {/* Itens */}
+                  <div className="flex justify-between items-center text-slate-300">
+                    <span>Itens:</span>
+                    <span className="font-medium text-white">{formatBRL(cartSubtotal)}</span>
                   </div>
+
+                  {/* Frete */}
                   {shippingCost > 0 && (
-                    <div className="flex justify-between text-slate-300">
+                    <div className="flex justify-between items-center text-slate-300">
                       <span>Frete ({shippingService}):</span>
-                      <span className="font-medium">{formatBRL(shippingCost)}</span>
+                      <span className="font-medium text-white">{formatBRL(shippingCost)}</span>
                     </div>
                   )}
-                  {paymentMethod === "card" && cardType === "credit" && installmentNum > 1 && (
-                    <div className="flex justify-between text-cyan-300">
-                      <span>Parcelamento:</span>
-                      <span className="font-semibold">{installmentNum}x de {formatBRL(installmentValue)}</span>
+
+                  {/* Juros (taxa de parcelamento) */}
+                  {fee > 0 ? (
+                    <div className="flex justify-between items-center text-slate-300">
+                      <span>Juros ({fee.toFixed(2)}%):</span>
+                      <span className="font-medium text-white">{formatBRL(feeAmount)}</span>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-300">Juros:</span>
+                      <span className="font-medium text-green-400">Sem juros (PIX)</span>
                     </div>
                   )}
-                  {fee > 0 && (
-                    <div className="flex justify-between text-orange-300">
-                      <span>Taxa de parcelamento ({fee}%):</span>
-                      <span>+ {formatBRL(feeAmount)}</span>
-                    </div>
-                  )}
-                  {fee === 0 && paymentMethod === "pix" && (
-                    <div className="flex justify-between text-green-400">
-                      <span>Taxa:</span>
-                      <span>Sem taxa (PIX)</span>
-                    </div>
-                  )}
-                  <div className="border-t border-cyan-500/30 pt-2 flex justify-between font-bold">
-                    <span className="text-white">Total:</span>
-                    <span className="text-xl bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
+                </div>
+
+                {/* Divisor */}
+                <div className="border-t border-slate-600/50" />
+
+                {/* Total do pedido */}
+                <div className="px-4 py-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-white text-base">Total do pedido:</span>
+                    <span className="font-bold text-xl bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
                       {formatBRL(total)}
                     </span>
                   </div>
+                  {/* Linha de parcelamento abaixo do total */}
+                  {paymentMethod === "card" && cardType === "credit" && installmentNum > 1 && (
+                    <p className="text-xs text-cyan-300 font-semibold mt-1">
+                      Em {installmentNum}x de {formatBRL(installmentValue)} com juros
+                    </p>
+                  )}
+                  {paymentMethod === "card" && cardType === "credit" && installmentNum === 1 && (
+                    <p className="text-xs text-slate-400 mt-1">À vista no crédito</p>
+                  )}
+                  {paymentMethod === "card" && cardType === "debit" && (
+                    <p className="text-xs text-slate-400 mt-1">Pagamento no débito</p>
+                  )}
+                  {paymentMethod === "pix" && (
+                    <p className="text-xs text-green-400 mt-1">Pagamento via PIX — sem juros</p>
+                  )}
                 </div>
               </div>
             </div>

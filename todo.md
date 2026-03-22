@@ -96,3 +96,4 @@
 - [x] Ajustar resumo financeiro no checkout: mostrar parcelas, valor/parcela, taxa e total
 - [x] Atualizar texto do checkbox de termos para incluir Política de Envio
 - [x] Corrigir layout mobile da seção "Encomenda Internacional Premium" (conteúdo cortado no celular)
+- [x] Atualizar resumo financeiro do checkout: novo layout estilo Amazon (Itens, Juros, Total do pedido, "Em Nx de R$ X,XX com juros")
