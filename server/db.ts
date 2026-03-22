@@ -10,6 +10,7 @@ import {
   reviews, InsertReview, Review,
   questions, InsertQuestion, Question,
   adminUsers,
+  featuredCarousel, InsertFeaturedCarousel,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -356,6 +357,46 @@ export async function deleteQuestion(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   return db.delete(questions).where(eq(questions.id, id));
+}
+
+// ===================== Featured Carousel queries =====================
+
+export async function getCarouselItems() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(featuredCarousel).orderBy(featuredCarousel.sortOrder);
+}
+
+export async function getActiveCarouselItems() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(featuredCarousel)
+    .where(eq(featuredCarousel.active, true))
+    .orderBy(featuredCarousel.sortOrder);
+}
+
+export async function addCarouselItem(data: { productId: number; sortOrder?: number; carouselTitle?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(featuredCarousel).values({
+    productId: data.productId,
+    sortOrder: data.sortOrder ?? 0,
+    carouselTitle: data.carouselTitle ?? "Destaques",
+    active: true,
+  });
+  return { id: result[0].insertId };
+}
+
+export async function updateCarouselItem(id: number, data: Partial<InsertFeaturedCarousel>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(featuredCarousel).set(data).where(eq(featuredCarousel.id, id));
+}
+
+export async function deleteCarouselItem(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.delete(featuredCarousel).where(eq(featuredCarousel.id, id));
 }
 
 // ===================== Admin user queries =====================

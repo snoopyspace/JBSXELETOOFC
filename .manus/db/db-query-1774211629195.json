@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `featuredCarousel` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `productId` int NOT NULL,\n  `sortOrder` int NOT NULL DEFAULT 0,\n  `active` boolean NOT NULL DEFAULT true,\n  `carouselTitle` varchar(255) NOT NULL DEFAULT 'Destaques',\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `featuredCarousel_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 24qoFEQo37pAuNZ.0436c89d6e66 --database 4ufiTAguMpYft9f8JCRftq --execute CREATE TABLE IF NOT EXISTS `featuredCarousel` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `productId` int NOT NULL,\n  `sortOrder` int NOT NULL DEFAULT 0,\n  `active` boolean NOT NULL DEFAULT true,\n  `carouselTitle` varchar(255) NOT NULL DEFAULT 'Destaques',\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `featuredCarousel_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 519
+}

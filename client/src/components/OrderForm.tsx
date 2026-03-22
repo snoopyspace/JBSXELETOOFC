@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MessageCircle, Loader2, FileText } from "lucide-react";
+import { MessageCircle, Loader2, FileText, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -46,7 +46,7 @@ const CARD_FEES = {
       { installments: 17, fee: 15.38 },
       { installments: 18, fee: 16.03 },
     ],
-    pix: 0.50,
+    pix: 0,
   },
   elo_hipercard_amex: {
     name: "Elo / Hipercard / American Express",
@@ -71,7 +71,7 @@ const CARD_FEES = {
       { installments: 17, fee: 15.58 },
       { installments: 18, fee: 16.23 },
     ],
-    pix: 0.50,
+    pix: 0,
   },
   other_cards: {
     name: "Outros Cartões",
@@ -96,15 +96,52 @@ const CARD_FEES = {
       { installments: 17, fee: 15.58 },
       { installments: 18, fee: 16.23 },
     ],
-    pix: 0.50,
+    pix: 0,
   },
 };
+
+const formatBRL = (value: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+
+// ===== CPF Validation =====
+function validateCPF(cpf: string): boolean {
+  const cleaned = cpf.replace(/\D/g, "");
+  if (cleaned.length !== 11) return false;
+  // Block all-same-digit CPFs
+  if (/^(\d)\1{10}$/.test(cleaned)) return false;
+
+  // First digit check
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += parseInt(cleaned[i]) * (10 - i);
+  let remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cleaned[9])) return false;
+
+  // Second digit check
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += parseInt(cleaned[i]) * (11 - i);
+  remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cleaned[10])) return false;
+
+  return true;
+}
+
+function formatCPF(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+}
 
 export default function OrderForm({ cart, onSubmit }: OrderFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [cpf, setCpf] = useState("");
+  const [cpfError, setCpfError] = useState("");
+  const [cpfTouched, setCpfTouched] = useState(false);
   const [cep, setCep] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
@@ -127,77 +164,74 @@ export default function OrderForm({ cart, onSubmit }: OrderFormProps) {
 
   // Calculate fee based on payment method
   const calculateFee = () => {
-    if (paymentMethod === "pix") {
-      return 0;
-    }
-
+    if (paymentMethod === "pix") return 0;
     const brandFees = CARD_FEES[cardBrand as keyof typeof CARD_FEES];
     if (!brandFees) return 0;
-
-    if (cardType === "debit") {
-      return brandFees.debit;
-    }
-
+    if (cardType === "debit") return brandFees.debit;
     const installmentNum = parseInt(installments);
-    const installmentFee = brandFees.credit_installments.find(
-      (i) => i.installments === installmentNum
-    );
+    const installmentFee = brandFees.credit_installments.find((i) => i.installments === installmentNum);
     return installmentFee?.fee || 0;
   };
 
   const fee = calculateFee();
   const feeAmount = (cartSubtotal * fee) / 100;
   const total = cartSubtotal + feeAmount + shippingCost;
+  const installmentNum = parseInt(installments) || 1;
+  const installmentValue = paymentMethod === "card" && cardType === "credit" ? total / installmentNum : 0;
+
+  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCPF(e.target.value);
+    setCpf(formatted);
+    if (cpfTouched) {
+      const digits = formatted.replace(/\D/g, "");
+      if (digits.length === 11) {
+        setCpfError(validateCPF(formatted) ? "" : "CPF inválido. Verifique os dígitos informados.");
+      } else {
+        setCpfError("");
+      }
+    }
+  };
+
+  const handleCpfBlur = () => {
+    setCpfTouched(true);
+    const digits = cpf.replace(/\D/g, "");
+    if (digits.length > 0 && digits.length < 11) {
+      setCpfError("CPF deve ter 11 dígitos.");
+    } else if (digits.length === 11 && !validateCPF(cpf)) {
+      setCpfError("CPF inválido. Verifique os dígitos informados.");
+    } else {
+      setCpfError("");
+    }
+  };
 
   const handleSearchCep = async () => {
     if (!cep.trim() || cep.length < 8) {
       toast.error("CEP inválido!");
       return;
     }
-
     setIsLoadingCep(true);
     try {
-      // Using ViaCEP API (free public API)
       const response = await axios.get(`https://viacep.com.br/ws/${cep.replace(/\D/g, "")}/json/`);
-
       if (response.data.erro) {
         toast.error("CEP não encontrado!");
         return;
       }
-
       setAddress(response.data.logradouro || "");
       setCity(response.data.localidade || "");
       setState(response.data.uf || "");
-      
-      // Calculate shipping options
       const totalWeight = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
       const options = [
-        {
-          service: "SEDEX",
-          price: 45.5 + (totalWeight * 5),
-          days: 2,
-        },
-        {
-          service: "PAC",
-          price: 25.0 + (totalWeight * 3),
-          days: 5,
-        },
-        {
-          service: "Mini Envios",
-          price: 15.0 + (totalWeight * 2),
-          days: 7,
-        },
+        { service: "SEDEX", price: 45.5 + (totalWeight * 5), days: 2 },
+        { service: "PAC", price: 25.0 + (totalWeight * 3), days: 5 },
+        { service: "Mini Envios", price: 15.0 + (totalWeight * 2), days: 7 },
       ];
-      
       setShippingOptions(options);
       setSelectedShipping(options[1]);
       setShippingCost(options[1].price);
       setShippingService(options[1].service);
-      
       toast.success("Endereço encontrado! Escolha uma opção de frete.");
     } catch (error) {
       toast.error("Erro ao buscar CEP");
-      console.error(error);
     } finally {
       setIsLoadingCep(false);
     }
@@ -211,8 +245,21 @@ export default function OrderForm({ cart, onSubmit }: OrderFormProps) {
       return;
     }
 
+    // CPF validation
+    const cpfDigits = cpf.replace(/\D/g, "");
+    if (!cpfDigits) {
+      toast.error("CPF é obrigatório!");
+      return;
+    }
+    if (!validateCPF(cpf)) {
+      setCpfError("CPF inválido. Verifique os dígitos informados.");
+      setCpfTouched(true);
+      toast.error("CPF inválido! Verifique o número informado.");
+      return;
+    }
+
     if (!termsAccepted) {
-      toast.error("Você deve aceitar os Termos de Aceite e Política de Troca para continuar!");
+      toast.error("Você deve aceitar os Termos de Aceite e Política de Envio, Troca, Devolução e Garantia para continuar!");
       return;
     }
 
@@ -222,19 +269,12 @@ export default function OrderForm({ cart, onSubmit }: OrderFormProps) {
     }
 
     const orderData = {
-      name,
-      email,
-      phone,
-      cpf,
-      cep,
-      address,
-      city,
-      state,
-      complement,
+      name, email, phone, cpf, cep, address, city, state, complement,
       paymentMethod,
       cardBrand: paymentMethod === "card" ? cardBrand : null,
       cardType: paymentMethod === "card" ? cardType : null,
-      installments: paymentMethod === "card" ? parseInt(installments) : null,
+      installments: paymentMethod === "card" ? installmentNum : null,
+      installmentValue: paymentMethod === "card" && cardType === "credit" ? installmentValue : null,
       cartSubtotal,
       shippingCost,
       shippingService,
@@ -242,7 +282,7 @@ export default function OrderForm({ cart, onSubmit }: OrderFormProps) {
       feeAmount,
       total,
       cart,
-      termsAccepted: termsAccepted,
+      termsAccepted,
     };
 
     onSubmit(orderData);
@@ -294,16 +334,48 @@ export default function OrderForm({ cart, onSubmit }: OrderFormProps) {
                   />
                 </div>
               </div>
+
+              {/* CPF com validação */}
               <div>
                 <Label htmlFor="cpf" className="text-slate-200">CPF *</Label>
-                <Input
-                  id="cpf"
-                  value={cpf}
-                  onChange={(e) => setCpf(e.target.value.replace(/\D/g, "").slice(0, 11))}
-                  placeholder="000.000.000-00"
-                  className="mt-1 bg-slate-700 border-cyan-500/30 text-white placeholder:text-slate-500"
-                  required
-                />
+                <div className="relative mt-1">
+                  <Input
+                    id="cpf"
+                    value={cpf}
+                    onChange={handleCpfChange}
+                    onBlur={handleCpfBlur}
+                    placeholder="000.000.000-00"
+                    className={`bg-slate-700 text-white placeholder:text-slate-500 pr-10 ${
+                      cpfTouched && cpfError
+                        ? "border-red-500 focus:border-red-500"
+                        : cpfTouched && !cpfError && cpf.replace(/\D/g, "").length === 11
+                        ? "border-green-500 focus:border-green-500"
+                        : "border-cyan-500/30"
+                    }`}
+                    required
+                  />
+                  {cpfTouched && cpf.replace(/\D/g, "").length === 11 && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {cpfError ? (
+                        <AlertCircle className="w-4 h-4 text-red-400" />
+                      ) : (
+                        <CheckCircle className="w-4 h-4 text-green-400" />
+                      )}
+                    </div>
+                  )}
+                </div>
+                {cpfTouched && cpfError && (
+                  <p className="mt-1 text-xs text-red-400 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {cpfError}
+                  </p>
+                )}
+                {cpfTouched && !cpfError && cpf.replace(/\D/g, "").length === 11 && (
+                  <p className="mt-1 text-xs text-green-400 flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" />
+                    CPF válido
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -409,7 +481,7 @@ export default function OrderForm({ cart, onSubmit }: OrderFormProps) {
                         <p className="font-semibold text-white">{option.service}</p>
                         <p className="text-sm text-slate-400">Entrega em {option.days} dia(s)</p>
                       </div>
-                      <p className="text-lg font-bold text-cyan-400">R$ {option.price.toFixed(2)}</p>
+                      <p className="text-lg font-bold text-cyan-400">{formatBRL(option.price)}</p>
                     </div>
                   </div>
                 ))}
@@ -428,7 +500,7 @@ export default function OrderForm({ cart, onSubmit }: OrderFormProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-700 border-cyan-500/30">
-                    <SelectItem value="pix" className="text-white">Pix (0,50% de taxa)</SelectItem>
+                    <SelectItem value="pix" className="text-white">PIX / Dinheiro (sem taxa)</SelectItem>
                     <SelectItem value="card" className="text-white">Cartão de Crédito/Débito</SelectItem>
                   </SelectContent>
                 </Select>
@@ -471,11 +543,17 @@ export default function OrderForm({ cart, onSubmit }: OrderFormProps) {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-slate-700 border-cyan-500/30 max-h-64">
-                          {CARD_FEES[cardBrand as keyof typeof CARD_FEES].credit_installments.map((inst) => (
-                            <SelectItem key={inst.installments} value={inst.installments.toString()} className="text-white">
-                              {inst.installments}x de R$ {(total / inst.installments).toFixed(2)} ({inst.fee}%)
-                            </SelectItem>
-                          ))}
+                          {CARD_FEES[cardBrand as keyof typeof CARD_FEES].credit_installments.map((inst) => {
+                            const instTotal = cartSubtotal * (1 + inst.fee / 100) + shippingCost;
+                            const instValue = instTotal / inst.installments;
+                            return (
+                              <SelectItem key={inst.installments} value={inst.installments.toString()} className="text-white">
+                                {inst.installments === 1
+                                  ? `À vista — ${formatBRL(instTotal)} (taxa ${inst.fee}%)`
+                                  : `${inst.installments}x de ${formatBRL(instValue)} — Total ${formatBRL(instTotal)} (taxa ${inst.fee}%)`}
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                     </div>
@@ -483,27 +561,50 @@ export default function OrderForm({ cart, onSubmit }: OrderFormProps) {
                 </>
               )}
 
-              {/* Fee Summary */}
-              <div className="p-4 bg-gradient-to-r from-cyan-500/20 to-pink-500/20 border border-cyan-500/30 rounded-lg">
+              {/* Fee Summary - DETALHADO */}
+              <div className="p-4 bg-gradient-to-r from-cyan-500/10 to-pink-500/10 border border-cyan-500/30 rounded-xl">
+                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-3">Resumo Financeiro</p>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-slate-300">
                     <span>Subtotal:</span>
-                    <span>R$ {cartSubtotal.toFixed(2)}</span>
+                    <span className="font-medium">{formatBRL(cartSubtotal)}</span>
                   </div>
-                  <div className="flex justify-between text-slate-300">
-                    <span>Taxa ({fee}%):</span>
-                    <span>R$ {feeAmount.toFixed(2)}</span>
-                  </div>
-                  <div className="border-t border-cyan-500/30 pt-2 flex justify-between font-bold text-cyan-400">
-                    <span>Total:</span>
-                    <span>R$ {total.toFixed(2)}</span>
+                  {shippingCost > 0 && (
+                    <div className="flex justify-between text-slate-300">
+                      <span>Frete ({shippingService}):</span>
+                      <span className="font-medium">{formatBRL(shippingCost)}</span>
+                    </div>
+                  )}
+                  {paymentMethod === "card" && cardType === "credit" && installmentNum > 1 && (
+                    <div className="flex justify-between text-cyan-300">
+                      <span>Parcelamento:</span>
+                      <span className="font-semibold">{installmentNum}x de {formatBRL(installmentValue)}</span>
+                    </div>
+                  )}
+                  {fee > 0 && (
+                    <div className="flex justify-between text-orange-300">
+                      <span>Taxa de parcelamento ({fee}%):</span>
+                      <span>+ {formatBRL(feeAmount)}</span>
+                    </div>
+                  )}
+                  {fee === 0 && paymentMethod === "pix" && (
+                    <div className="flex justify-between text-green-400">
+                      <span>Taxa:</span>
+                      <span>Sem taxa (PIX)</span>
+                    </div>
+                  )}
+                  <div className="border-t border-cyan-500/30 pt-2 flex justify-between font-bold">
+                    <span className="text-white">Total:</span>
+                    <span className="text-xl bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
+                      {formatBRL(total)}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Terms and Conditions */}
+          {/* Terms and Conditions - ATUALIZADO */}
           <div className="bg-slate-700/50 rounded-lg p-4 border border-pink-500/20 space-y-3">
             <div className="flex items-start gap-3">
               <Checkbox
@@ -513,25 +614,36 @@ export default function OrderForm({ cart, onSubmit }: OrderFormProps) {
                 className="mt-1"
               />
               <label htmlFor="terms" className="text-sm text-slate-300 cursor-pointer">
-                <span className="font-semibold text-white">Li e concordo com os Termos de Aceite e Política de Troca, Devolução e Garantia</span>
+                <span className="font-semibold text-white">
+                  Li e concordo com os Termos de Aceite, Política de Envio, Troca, Devolução e Garantia.
+                </span>
                 <div className="flex gap-2 mt-2 flex-wrap">
                   <a
-                    href="/terms?tab=terms"
+                    href="/termos-uso"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 text-xs font-semibold transition-colors"
                   >
-                    <FileText className="w-4 h-4" />
-                    Termos de Aceite
+                    <FileText className="w-3.5 h-3.5" />
+                    Termos de Uso
                   </a>
                   <a
-                    href="/terms?tab=policy"
+                    href="/politica-envio"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 text-xs font-semibold transition-colors"
                   >
-                    <FileText className="w-4 h-4" />
-                    Política de Troca
+                    <FileText className="w-3.5 h-3.5" />
+                    Política de Envio
+                  </a>
+                  <a
+                    href="/politica-privacidade"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 text-xs font-semibold transition-colors"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    Política de Privacidade
                   </a>
                 </div>
               </label>
@@ -545,7 +657,7 @@ export default function OrderForm({ cart, onSubmit }: OrderFormProps) {
             className="w-full bg-gradient-to-r from-cyan-500 to-cyan-400 hover:shadow-lg hover:shadow-cyan-500/50 text-slate-900 font-semibold py-6 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <MessageCircle className="w-5 h-5 mr-2" />
-            Realizar Pedido
+            Realizar Pedido via WhatsApp
           </Button>
         </form>
       </CardContent>

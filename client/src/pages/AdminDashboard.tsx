@@ -13,12 +13,12 @@ import { getLoginUrl } from "@/const";
 import {
   Plus, Trash2, Edit2, Package, ShoppingCart, Settings, FolderTree,
   BarChart3, Menu, X, ArrowLeft, Upload, Video, Image as ImageIcon,
-  Eye, ChevronDown, ChevronUp, Search, Home, TrendingUp,
+  Eye, ChevronDown, ChevronUp, ChevronRight, Search, Home, TrendingUp,
   Star, MessageSquare, CheckCircle, XCircle, Clock, Send, HelpCircle,
-  LogIn, LogOut, Lock, CreditCard, Truck, DollarSign, Percent, ShieldAlert,
+  LogIn, LogOut, Lock, CreditCard, Truck, DollarSign, Percent, ShieldAlert, Layers,
 } from "lucide-react";
 
-type Tab = "dashboard" | "categories" | "products" | "orders" | "abc" | "reviews" | "settings";
+type Tab = "dashboard" | "categories" | "products" | "orders" | "abc" | "reviews" | "carousel" | "settings";
 
 const statusLabels: Record<string, string> = {
   pending: "Pendente", confirmed: "Confirmado", shipped: "Enviado",
@@ -74,6 +74,11 @@ export default function AdminDashboard() {
   const { data: allPaymentFees, refetch: refetchPaymentFees } = trpc.paymentFeeConfig.getAll.useQuery(undefined, { enabled: isAdmin });
   const { data: allReviews, refetch: refetchReviews } = trpc.reviews.all.useQuery(undefined, { enabled: isAdmin });
   const { data: allQuestions, refetch: refetchQuestions } = trpc.questions.all.useQuery(undefined, { enabled: isAdmin });
+  const { data: carouselItems, refetch: refetchCarousel } = trpc.carousel.listAll.useQuery(undefined, { enabled: isAdmin });
+
+  // Carousel state
+  const [carouselTitleInput, setCarouselTitleInput] = useState("Destaques");
+  const [selectedCarouselProductId, setSelectedCarouselProductId] = useState<number | null>(null);
 
   // Init settings forms when data loads
   useEffect(() => {
@@ -119,6 +124,18 @@ export default function AdminDashboard() {
   });
   const deleteOrderMutation = trpc.orders.delete.useMutation({
     onSuccess: () => { toast.success("Pedido deletado!"); refetchOrders(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const addCarouselMutation = trpc.carousel.add.useMutation({
+    onSuccess: () => { toast.success("Produto adicionado ao carrossel!"); refetchCarousel(); setSelectedCarouselProductId(null); },
+    onError: (e) => toast.error(e.message),
+  });
+  const updateCarouselMutation = trpc.carousel.update.useMutation({
+    onSuccess: () => { toast.success("Carrossel atualizado!"); refetchCarousel(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteCarouselMutation = trpc.carousel.delete.useMutation({
+    onSuccess: () => { toast.success("Item removido do carrossel!"); refetchCarousel(); },
     onError: (e) => toast.error(e.message),
   });
   const uploadImageMutation = trpc.upload.image.useMutation();
@@ -332,6 +349,7 @@ export default function AdminDashboard() {
     { id: "orders" as Tab, label: "Pedidos", icon: ShoppingCart },
     { id: "abc" as Tab, label: "Curva ABC", icon: BarChart3 },
     { id: "reviews" as Tab, label: "Avaliações", icon: Star },
+    { id: "carousel" as Tab, label: "Carrossel", icon: Layers },
     { id: "settings" as Tab, label: "Config", icon: Settings },
   ];
 
@@ -1168,6 +1186,129 @@ export default function AdminDashboard() {
                           </Button>
                           <Button size="sm" variant="outline" onClick={() => { if (confirm("Excluir esta pergunta?")) deleteQuestionMutation.mutate({ id: q.id }); }} className="text-red-400 border-red-500/30 hover:bg-red-500/10 text-xs">
                             <Trash2 className="w-3 h-3 mr-1" /> Excluir
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* ===== CARROSSEL ===== */}
+        {activeTab === "carousel" && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              <Layers className="w-6 h-6 text-cyan-400" /> Gerenciar Carrossel de Destaques
+            </h2>
+            <p className="text-slate-400 text-sm">Adicione produtos ao carrossel da página inicial. As alterações são refletidas automaticamente no site.</p>
+
+            {/* Add product to carousel */}
+            <Card className="bg-slate-800 border-cyan-500/20">
+              <CardHeader>
+                <CardTitle className="text-cyan-400 flex items-center gap-2">
+                  <Plus className="w-5 h-5" /> Adicionar Produto ao Carrossel
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="sm:col-span-2">
+                    <Label className="text-slate-300">Produto</Label>
+                    <select
+                      value={selectedCarouselProductId ?? ""}
+                      onChange={(e) => setSelectedCarouselProductId(e.target.value ? parseInt(e.target.value) : null)}
+                      className="w-full h-10 px-3 rounded-md bg-slate-700 border border-cyan-500/30 text-white text-sm mt-1"
+                    >
+                      <option value="">Selecione um produto...</option>
+                      {products?.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-slate-300">Título do Carrossel</Label>
+                    <Input
+                      value={carouselTitleInput}
+                      onChange={(e) => setCarouselTitleInput(e.target.value)}
+                      className="bg-slate-700 border-cyan-500/30 text-white mt-1"
+                      placeholder="Ex: Destaques, Mais Vendidos..."
+                    />
+                  </div>
+                </div>
+                <Button
+                  onClick={() => {
+                    if (!selectedCarouselProductId) { toast.error("Selecione um produto"); return; }
+                    addCarouselMutation.mutate({ productId: selectedCarouselProductId, carouselTitle: carouselTitleInput, sortOrder: (carouselItems?.length ?? 0) });
+                  }}
+                  disabled={addCarouselMutation.isPending}
+                  className="bg-gradient-to-r from-cyan-500 to-cyan-400 text-slate-900 font-semibold"
+                >
+                  <Plus className="w-4 h-4 mr-2" /> Adicionar ao Carrossel
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* List carousel items */}
+            <Card className="bg-slate-800/80 border-cyan-500/20">
+              <CardHeader>
+                <CardTitle className="text-white">Itens no Carrossel ({carouselItems?.length || 0})</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {!carouselItems || carouselItems.length === 0 ? (
+                  <p className="text-slate-500 text-center py-8">Nenhum produto no carrossel. Adicione produtos acima.</p>
+                ) : (
+                  carouselItems.map((item, idx) => {
+                    const product = item.product;
+                    return (
+                      <div key={item.id} className="flex items-center gap-3 p-3 bg-slate-700/50 rounded-xl border border-slate-600/50">
+                        {product?.image ? (
+                          <img src={product.image} alt={product?.name} className="w-14 h-14 object-contain rounded-lg bg-slate-800 flex-shrink-0" />
+                        ) : (
+                          <div className="w-14 h-14 bg-slate-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Package className="w-6 h-6 text-slate-600" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-medium text-sm truncate">{product?.name || "Produto removido"}</p>
+                          <p className="text-cyan-400 text-xs">{product ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(product.price)) : ""}</p>
+                          <p className="text-slate-500 text-xs">Título: {item.carouselTitle} • Ordem: {item.sortOrder}</p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            onClick={() => updateCarouselMutation.mutate({ id: item.id, active: !item.active })}
+                            className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                              item.active ? "bg-green-500/20 text-green-400 border-green-500/30 hover:bg-green-500/30" : "bg-slate-700 text-slate-400 border-slate-600 hover:bg-slate-600"
+                            }`}
+                          >
+                            {item.active ? "Ativo" : "Inativo"}
+                          </button>
+                          <div className="flex flex-col gap-1">
+                            <button
+                              onClick={() => { if (idx > 0) updateCarouselMutation.mutate({ id: item.id, sortOrder: item.sortOrder - 1 }); }}
+                              disabled={idx === 0}
+                              className="p-1 text-slate-400 hover:text-white disabled:opacity-30 transition-colors"
+                              title="Mover para cima"
+                            >
+                              <ChevronUp className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => { if (idx < carouselItems.length - 1) updateCarouselMutation.mutate({ id: item.id, sortOrder: item.sortOrder + 1 }); }}
+                              disabled={idx === carouselItems.length - 1}
+                              className="p-1 text-slate-400 hover:text-white disabled:opacity-30 transition-colors"
+                              title="Mover para baixo"
+                            >
+                              <ChevronDown className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => { if (confirm("Remover do carrossel?")) deleteCarouselMutation.mutate({ id: item.id }); }}
+                            className="text-red-400 border-red-500/30 hover:bg-red-500/10 text-xs"
+                          >
+                            <Trash2 className="w-3 h-3" />
                           </Button>
                         </div>
                       </div>

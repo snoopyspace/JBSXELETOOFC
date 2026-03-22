@@ -391,6 +391,52 @@ export const appRouter = router({
       }),
   }),
 
+  // Featured Carousel
+  carousel: router({
+    listActive: publicProcedure.query(async () => {
+      const items = await db.getActiveCarouselItems();
+      // Enrich with product data
+      const enriched = await Promise.all(items.map(async (item) => {
+        const product = await db.getProductById(item.productId);
+        return { ...item, product };
+      }));
+      return enriched.filter(i => i.product);
+    }),
+    listAll: publicProcedure.query(async () => {
+      const items = await db.getCarouselItems();
+      const enriched = await Promise.all(items.map(async (item) => {
+        const product = await db.getProductById(item.productId);
+        return { ...item, product };
+      }));
+      return enriched;
+    }),
+    add: publicProcedure
+      .input(z.object({
+        productId: z.number(),
+        sortOrder: z.number().optional(),
+        carouselTitle: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.addCarouselItem(input);
+      }),
+    update: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        sortOrder: z.number().optional(),
+        active: z.boolean().optional(),
+        carouselTitle: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return await db.updateCarouselItem(id, data);
+      }),
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteCarouselItem(input.id);
+      }),
+  }),
+
   // Payment Fee Configuration
   paymentFeeConfig: router({
     get: publicProcedure.query(async () => {

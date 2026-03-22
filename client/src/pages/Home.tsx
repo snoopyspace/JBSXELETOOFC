@@ -9,6 +9,7 @@ import { ShoppingCart, Menu, X, LogIn, Instagram, MessageCircle, Calculator, Sea
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import UnifiedCalculator from "@/components/UnifiedCalculator";
+import ProductCarousel from "@/components/ProductCarousel";
 
 interface Category {
   id: number;
@@ -296,14 +297,6 @@ Aguardo retorno!
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      {/* Banner de Autenticidade - Google Ads Compliance */}
-      <div className="bg-green-600 text-white text-center py-2 px-4 text-sm font-medium">
-        <span className="inline-flex items-center gap-2 justify-center">
-          <CheckCircle className="w-4 h-4" />
-          Produtos 100% originais com garantia e procedência verificada
-        </span>
-      </div>
-
       {/* Header */}
       <header className="sticky top-0 z-40 bg-gradient-to-r from-slate-900 to-slate-800 border-b border-cyan-500/20 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -421,8 +414,13 @@ Aguardo retorno!
         <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
       </section>
 
+      {/* ===== CARROSSEL DE DESTAQUES ===== */}
+      <div id="products-section">
+        <ProductCarousel onAddToCart={handleAddToCart} />
+      </div>
+
       {/* Main Content */}
-      <div id="products-section" className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Sidebar - Categories */}
           <div className="hidden md:block">

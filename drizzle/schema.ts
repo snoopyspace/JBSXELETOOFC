@@ -131,6 +131,20 @@ export const questions = mysqlTable("questions", {
 export type Question = typeof questions.$inferSelect;
 export type InsertQuestion = typeof questions.$inferInsert;
 
+// Featured Carousel table
+export const featuredCarousel = mysqlTable("featuredCarousel", {
+  id: int("id").autoincrement().primaryKey(),
+  productId: int("productId").notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  active: boolean("active").default(true).notNull(),
+  carouselTitle: varchar("carouselTitle", { length: 255 }).default("Destaques").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type FeaturedCarousel = typeof featuredCarousel.$inferSelect;
+export type InsertFeaturedCarousel = typeof featuredCarousel.$inferInsert;
+
 // Admin users table (independent login)
 export const adminUsers = mysqlTable("admin_users", {
   id: int("id").autoincrement().primaryKey(),

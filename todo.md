@@ -83,3 +83,15 @@
 - [x] Implementar seção de avaliações de clientes (já existia)
 - [x] Adicionar seção de redes sociais (Instagram @jbsxeletro)
 - [x] Implementar barra de pesquisa no header com sugestões em tempo real
+
+## Melhorias UX + Admin - Março 2026
+
+- [x] Remover banner "Produtos 100% originais" do topo da home
+- [x] Criar tabela featured_carousel no banco (id, productId, order, active, title, createdAt)
+- [x] Criar rotas tRPC para CRUD do carrossel (admin: criar/editar/deletar/reordenar; público: listar ativos)
+- [x] Criar carrossel responsivo na home com setas e pontos de navegação
+- [x] Criar painel de gerenciamento do carrossel no admin (adicionar/remover/reordenar/ativar)
+- [x] Atualizar Consultor de Parcelamento: adicionar seleção de produto e simulação automática
+- [x] Implementar validação completa de CPF brasileiro no checkout (dígitos verificadores)
+- [x] Ajustar resumo financeiro no checkout: mostrar parcelas, valor/parcela, taxa e total
+- [x] Atualizar texto do checkbox de termos para incluir Política de Envio
