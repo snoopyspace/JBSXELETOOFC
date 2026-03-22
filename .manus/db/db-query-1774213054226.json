@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE featuredCarousel SET carouselTitle = 'Destaques mais visualizados' WHERE carouselTitle = 'Destaques' OR carouselTitle IS NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 24qoFEQo37pAuNZ.0436c89d6e66 --database 4ufiTAguMpYft9f8JCRftq --execute UPDATE featuredCarousel SET carouselTitle = 'Destaques mais visualizados' WHERE carouselTitle = 'Destaques' OR carouselTitle IS NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 79
+}

@@ -64,7 +64,7 @@ export default function ProductCarousel({ onAddToCart }: ProductCarouselProps) {
 
   if (items.length === 0) return null;
 
-  const carouselTitle = items[0]?.carouselTitle || "Destaques";
+  const carouselTitle = items[0]?.carouselTitle || "Destaques mais visualizados";
 
   return (
     <section className="max-w-7xl mx-auto px-4 py-8">

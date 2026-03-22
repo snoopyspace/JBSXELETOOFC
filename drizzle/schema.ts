@@ -137,7 +137,7 @@ export const featuredCarousel = mysqlTable("featuredCarousel", {
   productId: int("productId").notNull(),
   sortOrder: int("sortOrder").default(0).notNull(),
   active: boolean("active").default(true).notNull(),
-  carouselTitle: varchar("carouselTitle", { length: 255 }).default("Destaques").notNull(),
+  carouselTitle: varchar("carouselTitle", { length: 255 }).default("Destaques mais visualizados").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
