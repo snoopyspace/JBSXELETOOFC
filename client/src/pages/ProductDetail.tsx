@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft, ShoppingCart, ChevronLeft, ChevronRight, Play, Package,
-  Truck, Shield, Share2, Heart,
+  Truck, Shield, Share2, CheckCircle, FileText, Clock,
 } from "lucide-react";
 import ProductReviews from "@/components/ProductReviews";
 import ProductQuestions from "@/components/ProductQuestions";
@@ -189,8 +189,13 @@ export default function ProductDetail() {
 
             <div className="flex items-baseline gap-3">
               <span className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
-                R$ {parseFloat(product.price).toFixed(2)}
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(product.price))}
               </span>
+            </div>
+            {/* Produto original - Google Ads */}
+            <div className="flex items-center gap-2 text-sm text-green-400 font-medium">
+              <CheckCircle className="w-4 h-4" />
+              Produto original com garantia do fabricante/importador
             </div>
 
             {/* Stock */}
@@ -267,6 +272,44 @@ export default function ProductDetail() {
           </div>
         </div>
 
+        {/* ===== SEÇÃO DE INFORMAÇÕES LEGAIS ===== */}
+        <div className="mt-10 bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6">
+          <h3 className="text-lg font-bold text-white mb-5 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-cyan-400" />
+            Informações Legais
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-start gap-3 p-4 bg-slate-700/30 rounded-xl border border-slate-600/30">
+              <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-white font-semibold text-sm">Nota Fiscal</p>
+                <p className="text-slate-400 text-xs mt-1">Todos os produtos são emitidos com nota fiscal conforme legislação brasileira vigente.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-4 bg-slate-700/30 rounded-xl border border-slate-600/30">
+              <Shield className="w-5 h-5 text-cyan-400 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-white font-semibold text-sm">Garantia</p>
+                <p className="text-slate-400 text-xs mt-1">Conforme legislação vigente e especificação do fabricante/importador.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-4 bg-slate-700/30 rounded-xl border border-slate-600/30">
+              <Clock className="w-5 h-5 text-pink-400 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-white font-semibold text-sm">Prazo de Entrega</p>
+                <p className="text-slate-400 text-xs mt-1">Brasil (exceto Fortaleza): 10 dias úteis. Fortaleza: 3 dias úteis (após 2 dias de faturamento).</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-4 bg-slate-700/30 rounded-xl border border-slate-600/30">
+              <Truck className="w-5 h-5 text-purple-400 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-white font-semibold text-sm">Rastreamento</p>
+                <p className="text-slate-400 text-xs mt-1">Código de rastreio enviado para todos os pedidos via e-mail e WhatsApp.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Reviews Section */}
         <div className="mt-12 border-t border-slate-700/50 pt-8">
           <ProductReviews productId={productId} />
@@ -297,7 +340,7 @@ export default function ProductDetail() {
                   </div>
                   <div className="p-3">
                     <p className="text-white text-sm font-medium truncate">{p.name}</p>
-                    <p className="text-cyan-400 font-bold text-sm mt-1">R$ {parseFloat(p.price).toFixed(2)}</p>
+                    <p className="text-cyan-400 font-bold text-sm mt-1">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(p.price))}</p>
                   </div>
                 </button>
               ))}

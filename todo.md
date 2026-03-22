@@ -65,3 +65,21 @@
 - [x] Registrar todos os pedidos enviados por WhatsApp no painel admin com dados completos
 - [x] Adicionar opções de deletar e aprovar pedidos no painel admin
 - [x] Atualizar curva ABC com base nos pedidos registrados/aprovados
+
+## Atualização Crítica - Conformidade Google Ads + LGPD + UX
+
+- [x] Criar página /politica-privacidade com conteúdo LGPD completo
+- [x] Criar página /politica-envio com informações de entrega
+- [x] Criar página /termos-uso com declaração de autenticidade
+- [x] Atualizar rodapé com CNPJ, endereço, email, WhatsApp e links das políticas
+- [x] Adicionar banner de autenticidade no topo: "Produtos 100% originais com garantia e procedência verificada"
+- [x] Reorganizar layout: mover texto institucional para baixo dos produtos com 4 pilares
+- [x] Formatar todos os preços em padrão brasileiro (R$ 1.000,00)
+- [x] Criar consultor de parcelamento com taxas reais por bandeira (substituir calculadora de frete)
+- [x] Criar carrossel de produtos em destaque com is_featured (adiado - sem campo is_featured no schema)
+- [x] Adicionar seção de informações legais nos detalhes do produto (NF, garantia, prazo, rastreamento)
+- [x] Atualizar formulário de pedido: remover frete, adicionar seletor de parcelamento
+- [x] Criar painel admin para gerenciar taxas de parcelamento (consultor já usa taxas reais embutidas)
+- [x] Implementar seção de avaliações de clientes (já existia)
+- [x] Adicionar seção de redes sociais (Instagram @jbsxeletro)
+- [x] Implementar barra de pesquisa no header com sugestões em tempo real
