@@ -10,6 +10,7 @@ import { useLocation } from "wouter";
 import { toast } from "sonner";
 import UnifiedCalculator from "@/components/UnifiedCalculator";
 import ProductCarousel from "@/components/ProductCarousel";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 interface Category {
   id: number;
@@ -484,9 +485,12 @@ Aguardo retorno!
 
                       {/* Price and Stock */}
                       <div className="flex flex-col mb-2 mt-auto gap-1">
-                        <span className="text-sm sm:text-base font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
-                          {formatBRL(parseFloat(product.price))}
-                        </span>
+                        <PriceDisplay
+                          price={parseFloat(product.price)}
+                          size="sm"
+                          showInstallment={true}
+                          showWhatsAppLink={false}
+                        />
                         {product.stock > 0 ? (
                           <Badge className="bg-gradient-to-r from-green-500 to-green-400 text-slate-900 border-0 text-[10px] sm:text-xs w-fit">
                             Estoque
@@ -791,7 +795,7 @@ Aguardo retorno!
                     )}
                     <div className="flex-1">
                       <p className="font-semibold text-white">{item.name}</p>
-                      <p className="text-sm text-cyan-400">{formatBRL(parseFloat(item.price))}</p>
+                      <p className="text-sm text-cyan-400">{formatBRL(parseFloat(item.price))} <span className="text-[10px] text-green-400 font-semibold">no PIX</span></p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -820,18 +824,19 @@ Aguardo retorno!
 
               {/* Cart Total */}
               <div className="border-t border-cyan-500/20 pt-4">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="font-semibold text-white">Total:</span>
-                  <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
-                    {formatBRL(cartTotal)}
-                  </span>
-                </div>
-                <Button
-                  onClick={handleCheckout}
-                  className="w-full bg-gradient-to-r from-cyan-500 to-cyan-400 hover:shadow-lg hover:shadow-cyan-500/50 text-slate-900 font-semibold text-sm md:text-base py-2 md:py-3"
-                >
-                  Fazer Pedido
-                </Button>
+              <div className="flex justify-between items-center mb-1">
+                <span className="font-semibold text-white">Total no PIX:</span>
+                <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
+                  {formatBRL(cartTotal)}
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-400 mb-3">Cartão em até 12x sob consulta, com acréscimo das taxas.</p>
+              <Button
+                onClick={handleCheckout}
+                className="w-full bg-gradient-to-r from-cyan-500 to-cyan-400 hover:shadow-lg hover:shadow-cyan-500/50 text-slate-900 font-semibold text-sm md:text-base py-2 md:py-3"
+              >
+                Fazer Pedido
+              </Button>
               </div>
             </div>
           </div>
@@ -862,7 +867,7 @@ Aguardo retorno!
                   )}
                   <div className="flex-1">
                     <p className="font-semibold text-white text-sm">{item.name}</p>
-                    <p className="text-sm text-cyan-400">{formatBRL(parseFloat(item.price))}</p>
+                    <p className="text-sm text-cyan-400">{formatBRL(parseFloat(item.price))} <span className="text-[10px] text-green-400 font-semibold">no PIX</span></p>
                   </div>
                   <div className="flex items-center gap-1">
                     <button
@@ -885,12 +890,13 @@ Aguardo retorno!
 
             {/* Cart Total */}
             <div className="border-t border-cyan-500/20 pt-4 sticky bottom-0 bg-gradient-to-br from-slate-800 to-slate-900">
-              <div className="flex justify-between items-center mb-4">
-                <span className="font-semibold text-white">Total:</span>
+              <div className="flex justify-between items-center mb-1">
+                <span className="font-semibold text-white">Total no PIX:</span>
                 <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
-                  R$ {cartTotal.toFixed(2)}
+                  {formatBRL(cartTotal)}
                 </span>
               </div>
+              <p className="text-[10px] text-slate-400 mb-3">Cartão em até 12x sob consulta, com acréscimo das taxas.</p>
               <Button
                 onClick={handleCheckout}
                 className="w-full bg-gradient-to-r from-cyan-500 to-cyan-400 hover:shadow-lg hover:shadow-cyan-500/50 text-slate-900 font-semibold text-sm md:text-base py-2 md:py-3"

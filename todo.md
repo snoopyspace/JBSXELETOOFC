@@ -97,3 +97,11 @@
 - [x] Atualizar texto do checkbox de termos para incluir Política de Envio
 - [x] Corrigir layout mobile da seção "Encomenda Internacional Premium" (conteúdo cortado no celular)
 - [x] Atualizar resumo financeiro do checkout: novo layout estilo Amazon (Itens, Juros, Total do pedido, "Em Nx de R$ X,XX com juros")
+
+## Comunicação Comercial de Preços - PIX
+- [x] Criar componente reutilizável PriceDisplay com tag "no PIX" e texto de parcelamento
+- [x] Atualizar cards de produto na home com "R$ X no PIX" e "Cartão em até 12x sob consulta"
+- [x] Atualizar carrossel de destaques com novo padrão de preço PIX
+- [x] Atualizar página de produto (ProductDetail) com seção "Condições de Pagamento"
+- [x] Adicionar texto "Quer parcelar? Consulte condições em até 12x no cartão pelo WhatsApp" próximo aos botões de compra
+- [x] Atualizar checkout/OrderForm com informação de preço PIX e parcelamento sob consulta

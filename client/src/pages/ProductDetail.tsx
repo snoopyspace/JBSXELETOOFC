@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import ProductReviews from "@/components/ProductReviews";
 import ProductQuestions from "@/components/ProductQuestions";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 export default function ProductDetail() {
   const [, params] = useRoute("/product/:id");
@@ -188,9 +189,12 @@ export default function ProductDetail() {
             <h2 className="text-2xl sm:text-3xl font-bold text-white leading-tight">{product.name}</h2>
 
             <div className="flex items-baseline gap-3">
-              <span className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(product.price))}
-              </span>
+              <PriceDisplay
+                price={parseFloat(product.price)}
+                size="xl"
+                showInstallment={true}
+                showWhatsAppLink={true}
+              />
             </div>
             {/* Produto original - Google Ads */}
             <div className="flex items-center gap-2 text-sm text-green-400 font-medium">
@@ -267,6 +271,33 @@ export default function ProductDetail() {
               <div className="flex items-center gap-2 p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
                 <Shield className="w-5 h-5 text-green-400 flex-shrink-0" />
                 <span className="text-slate-300 text-xs">Garantia de qualidade</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ===== SEÇÃO DE CONDIÇÕES DE PAGAMENTO ===== */}
+        <div className="mt-6 bg-slate-800/40 border border-cyan-500/20 rounded-2xl p-5">
+          <h3 className="text-base font-bold text-white mb-3 flex items-center gap-2">
+            <span className="text-lg">💳</span>
+            Condições de Pagamento
+          </h3>
+          <p className="text-slate-300 text-sm leading-relaxed mb-3">
+            Os preços anunciados em nosso site correspondem aos <strong className="text-cyan-400">valores promocionais para pagamento via PIX</strong>. Para pagamento no cartão de crédito, consulte nossa equipe pelo WhatsApp. O parcelamento poderá ser realizado em até 12x, sob consulta, com acréscimo das taxas aplicáveis da operadora/cartão.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex items-start gap-2 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <span className="text-green-400 text-lg mt-0.5">🔑</span>
+              <div>
+                <p className="text-green-400 font-semibold text-xs">PIX — Melhor preço</p>
+                <p className="text-slate-400 text-xs mt-0.5">Valor anunciado válido exclusivamente para pagamento via PIX.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2 p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
+              <span className="text-cyan-400 text-lg mt-0.5">💳</span>
+              <div>
+                <p className="text-cyan-400 font-semibold text-xs">Cartão — até 12x sob consulta</p>
+                <p className="text-slate-400 text-xs mt-0.5">Parcelamento disponível com acréscimo das taxas da operadora. Consulte pelo WhatsApp.</p>
               </div>
             </div>
           </div>

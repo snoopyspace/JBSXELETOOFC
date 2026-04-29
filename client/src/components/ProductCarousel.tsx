@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, ShoppingCart, Eye, Package } from "lucide-react";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 interface CarouselItem {
   id: number;
@@ -139,9 +140,14 @@ export default function ProductCarousel({ onAddToCart }: ProductCarouselProps) {
                 {/* Info */}
                 <div className="p-4">
                   <h3 className="text-white font-semibold text-sm leading-tight line-clamp-2 mb-2">{product.name}</h3>
-                  <p className="text-cyan-400 font-bold text-lg mb-4">
-                    {formatBRL(parseFloat(product.price))}
-                  </p>
+                  <div className="mb-4">
+                    <PriceDisplay
+                      price={parseFloat(product.price)}
+                      size="md"
+                      showInstallment={true}
+                      showWhatsAppLink={false}
+                    />
+                  </div>
                   <div className="flex gap-2">
                     <Button
                       size="sm"

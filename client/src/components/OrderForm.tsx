@@ -561,12 +561,30 @@ export default function OrderForm({ cart, onSubmit }: OrderFormProps) {
                 </>
               )}
 
+              {/* Nota PIX */}
+              {paymentMethod === "pix" && (
+                <div className="flex items-start gap-2 p-3 bg-green-500/10 border border-green-500/30 rounded-lg text-xs">
+                  <span className="text-green-400 text-base mt-0.5">🔑</span>
+                  <p className="text-green-300">
+                    <strong>Você está pagando com PIX</strong> — este é o valor promocional anunciado, sem acréscimos.
+                  </p>
+                </div>
+              )}
+              {paymentMethod === "card" && (
+                <div className="flex items-start gap-2 p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-xs">
+                  <span className="text-cyan-400 text-base mt-0.5">💳</span>
+                  <p className="text-slate-300">
+                    O preço anunciado é válido para PIX. O parcelamento no cartão é realizado <strong className="text-cyan-300">sob consulta, com acréscimo das taxas aplicáveis</strong>.
+                  </p>
+                </div>
+              )}
+
               {/* Fee Summary - ESTILO AMAZON */}
               <div className="rounded-xl border border-slate-600/50 bg-slate-800/60 overflow-hidden">
                 <div className="px-4 py-3 space-y-2 text-sm">
                   {/* Itens */}
                   <div className="flex justify-between items-center text-slate-300">
-                    <span>Itens:</span>
+                    <span>Itens ({paymentMethod === "pix" ? "no PIX" : "no cartão"}):</span>
                     <span className="font-medium text-white">{formatBRL(cartSubtotal)}</span>
                   </div>
 
