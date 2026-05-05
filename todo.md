@@ -106,3 +106,4 @@
 - [x] Adicionar texto "Quer parcelar? Consulte condições em até 12x no cartão pelo WhatsApp" próximo aos botões de compra
 - [x] Atualizar checkout/OrderForm com informação de preço PIX e parcelamento sob consulta
 - [x] Inserir código Google AdSense (ca-pub-9662733499430793) no index.html
+- [x] Criar arquivo ads.txt em /public com entrada Google AdSense (pub-9662733499430793)
